@@ -20,7 +20,7 @@ export function GeneralInfoTab({ form }) {
           {/* USER AVATAR COMPONENT */}
           <div className="relative cursor-pointer group">
             <Avatar className="h-16 w-16 border-2 border-border group-hover:border-primary transition-colors">
-              <AvatarImage src="" />
+              <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback className="text-lg bg-muted">U</AvatarFallback>
             </Avatar>
             <div className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1 shadow-md">
