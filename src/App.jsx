@@ -1,38 +1,21 @@
 import React, { useState, useEffect } from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  useNavigate,
-} from "react-router-dom";
-import { Navbar } from "@/components/layout/Navbar";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LoginForm } from "@/components/features/auth/LoginForm";
 import { RegisterForm } from "@/components/features/auth/RegisterForm";
 import ProfilePage from "@/pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import { ThemeProvider } from "@/components/theme-provider";
+import Dashboard from "./pages/Dashboard";
+import { Layout } from "@/components/layout/Layout";
+import ChatPage from "@/pages/ChatPage";
 
-// Dummy Dashboard Component for testing
-const Dashboard = () => (
-  <div className="p-8 text-2xl font-bold">Welcome to your Dashboard!</div>
-);
 const History = () => (
-  <div className="p-8 text-2xl font-bold">Your Activity History</div>
-);
-
-// Layout Wrapper to keep Navbar consistent across pages
-const Layout = ({ children, user, onLogout }) => (
-  <div className="min-h-screen bg-background flex flex-col">
-    <Navbar user={user} onLogout={onLogout} />
-    <main className="flex-1">{children}</main>
-  </div>
+  <div className="py-8 text-2xl font-bold">Your Activity History</div>
 );
 
 export default function App() {
   const [user, setUser] = useState(null);
 
-  // 1. Check for existing session on load
   useEffect(() => {
     const storedUser = localStorage.getItem("stress_companion_user");
     if (storedUser) {
@@ -40,7 +23,6 @@ export default function App() {
     }
   }, []);
 
-  // 2. Login Handler (passed to LoginForm)
   const handleLogin = (userData) => {
     const dummyUser = {
       name: "Preeth",
@@ -51,11 +33,10 @@ export default function App() {
     localStorage.setItem("stress_companion_user", JSON.stringify(dummyUser));
   };
 
-  // 3. Logout Handler (passed to Navbar)
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem("stress_companion_user");
-    window.location.href = "/"; // Hard refresh to clear any sensitive state
+    window.location.href = "/";
   };
 
   return (
@@ -70,7 +51,7 @@ export default function App() {
                 <Navigate to="/dashboard" />
               ) : (
                 <Layout user={user}>
-                  <div className="flex items-center justify-center p-4 py-12">
+                  <div className="flex items-center justify-center min-h-[80vh]">
                     <LoginForm onLoginSuccess={handleLogin} />
                   </div>
                 </Layout>
@@ -84,7 +65,7 @@ export default function App() {
                 <Navigate to="/dashboard" />
               ) : (
                 <Layout user={user}>
-                  <div className="flex items-center justify-center p-4 py-12">
+                  <div className="flex items-center justify-center min-h-[80vh]">
                     <RegisterForm />
                   </div>
                 </Layout>
@@ -92,13 +73,25 @@ export default function App() {
             }
           />
 
-          {/* PROTECTED ROUTES (Require Login) */}
+          {/* PROTECTED ROUTES */}
           <Route
             path="/dashboard"
             element={
               user ? (
                 <Layout user={user} onLogout={handleLogout}>
                   <Dashboard />
+                </Layout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              user ? (
+                <Layout user={user} onLogout={handleLogout}>
+                  <ChatPage />
                 </Layout>
               ) : (
                 <Navigate to="/login" />
@@ -147,12 +140,13 @@ export default function App() {
             path="/"
             element={
               <Layout user={user} onLogout={handleLogout}>
-                <div className="p-12 text-center">
-                  <h1 className="text-4xl font-bold mb-4">
+                <div className="py-20 text-center">
+                  <h1 className="text-4xl font-bold mb-4 tracking-tight md:text-6xl">
                     Welcome to Stress Companion
                   </h1>
-                  <p className="text-muted-foreground">
-                    Your personal mental health assistant.
+                  <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto">
+                    Your personal mental health assistant, designed to help you
+                    find balance and clarity.
                   </p>
                 </div>
               </Layout>
