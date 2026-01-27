@@ -7,8 +7,8 @@ import {
   Settings,
   MessageSquare,
   LogOut,
+  Leaf,
 } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -32,10 +32,8 @@ export function Navbar({ user = null, onLogout }) {
             to="/"
             className="flex items-center gap-2 font-bold text-xl text-primary"
           >
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
-              <span className="text-lg">S</span>
-            </div>
-            <span className="hidden sm:inline">StressCompanion</span>
+            <Leaf className="h-5 w-5" />
+            <span className="hidden sm:inline">Stress Companion</span>
           </Link>
         </div>
 
