@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Mic, MicOff, PhoneOff, MessageSquare, Maximize2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,14 @@ import {
 import { Navbar } from "@/components/layout/Navbar";
 import { VoiceVisualizer } from "@/components/features/chat/VoiceVisualizer";
 import { ConversationPanel } from "@/components/features/chat/ConversationPanel";
+
+/* ============================
+   SPEECH API SETUP (LOGIC)
+============================ */
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+let recognition = null;
 
 export default function ChatPage({ user, onLogout }) {
   const navigate = useNavigate();
@@ -29,34 +37,105 @@ export default function ChatPage({ user, onLogout }) {
   const [isChatOpen, setIsChatOpen] = useState(true);
 
   // --- RESIZABLE PANEL STATE ---
-  const [chatWidth, setChatWidth] = useState(35);
+  const [chatWidth, setChatWidth] = useState(40);
   const [isDragging, setIsDragging] = useState(false);
+
+  /* ============================
+     INIT SPEECH RECOGNITION
+  ============================ */
+  useEffect(() => {
+    if (!SpeechRecognition) return;
+
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+      setIsMicOn(false);
+      setAiState("idle");
+    };
+
+    recognition.onend = () => {
+      setIsMicOn(false);
+      setAiState("idle");
+
+      if (input.trim()) {
+        handleSendMessage();
+      }
+    };
+
+    return () => {
+      recognition && recognition.stop();
+    };
+  }, [input]);
+
+  /* ============================
+     TEXT → SPEECH (AI VOICE)
+  ============================ */
+  const speak = (text) => {
+    if (!window.speechSynthesis) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 1.2;
+    utterance.pitch = 2;
+
+    setAiState("speaking");
+
+    utterance.onend = () => {
+      setAiState(isMicOn ? "listening" : "idle");
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
 
   // --- HANDLERS ---
   const handleSendMessage = () => {
     if (!input.trim()) return;
+
     const userMsg = { id: Date.now(), role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
     setAiState("thinking");
+
     setTimeout(() => {
-      setAiState("speaking");
+      const aiText =
+        "I understand. Let's focus on that feeling. Take a deep breath with me.";
+
       const aiMsg = {
         id: Date.now(),
         role: "assistant",
-        content:
-          "I understand. Let's focus on that feeling. Take a deep breath with me.",
+        content: aiText,
       };
+
       setMessages((prev) => [...prev, aiMsg]);
-      setTimeout(() => setAiState(isMicOn ? "listening" : "idle"), 4000);
+      speak(aiText);
     }, 1500);
   };
 
   const toggleMic = () => {
-    const newState = !isMicOn;
-    setIsMicOn(newState);
-    setAiState(newState ? "listening" : "idle");
+    if (!SpeechRecognition || !recognition) {
+      alert("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    if (!isMicOn) {
+      setIsMicOn(true);
+      setAiState("listening");
+      recognition.start();
+    } else {
+      recognition.stop();
+      setIsMicOn(false);
+      setAiState("idle");
+    }
   };
 
   // --- RESIZE LOGIC ---
@@ -88,21 +167,12 @@ export default function ChatPage({ user, onLogout }) {
   return (
     <TooltipProvider>
       <div className="h-screen flex flex-col bg-background overflow-hidden">
-        {/* 1. NAVBAR */}
         <Navbar user={user} onLogout={onLogout} />
 
-        {/* 2. MAIN CONTENT AREA */}
         <div className="flex-1 min-h-0 w-full p-4 md:p-6 animate-in fade-in duration-500">
-          {/* MAIN CONSOLE CARD */}
           <div className="h-full w-full flex rounded-3xl border border-border/50 shadow-2xl overflow-hidden bg-background">
-            {/* === LEFT: Visualizer Area === */}
             <div className="flex-1 flex flex-col min-w-0 relative">
-              {/* Visualizer Component */}
               <div className="flex-1 relative">
-                {/* FIX 1: Toggle Button Visibility
-                      Added bg-background/50 backdrop-blur so it stands out against any color 
-                      Changed text color to 'text-foreground' for auto dark/light adaptation
-                  */}
                 <div className="absolute top-6 right-6 z-20">
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -128,11 +198,7 @@ export default function ChatPage({ user, onLogout }) {
                 <VoiceVisualizer aiState={aiState} isUserSpeaking={isMicOn} />
               </div>
 
-              {/* FIX 2: Controls Bar Background
-                    Removed bg-slate-900. Now uses bg-background (White in light mode / Dark in dark mode).
-                */}
               <div className="h-20 shrink-0 flex items-center gap-3 justify-center bg-background border-t border-border">
-                {/* Mic Button */}
                 <Button
                   className={`!py-6 !px-8 text-lg font-semibold rounded-full cursor-pointer shadow-md transition-all ${
                     isMicOn
@@ -162,7 +228,6 @@ export default function ChatPage({ user, onLogout }) {
               </div>
             </div>
 
-            {/* === DRAGGER HANDLE === */}
             {isChatOpen && (
               <div
                 className="w-[1px] hover:w-1 bg-border/50 hover:bg-blue-500 cursor-col-resize z-50 transition-all duration-150 flex flex-col justify-center items-center group -ml-[0.5px] relative"
@@ -172,7 +237,6 @@ export default function ChatPage({ user, onLogout }) {
               </div>
             )}
 
-            {/* === RIGHT: Chat Panel === */}
             {isChatOpen && (
               <div
                 className={`flex flex-col bg-card h-full ${
@@ -196,3 +260,4 @@ export default function ChatPage({ user, onLogout }) {
     </TooltipProvider>
   );
 }
+ 

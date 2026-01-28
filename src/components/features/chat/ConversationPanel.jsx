@@ -22,7 +22,6 @@ export function ConversationPanel({ messages, input, setInput, onSendMessage }) 
            </div>
            <div>
              <h2 className="font-semibold text-sm">Session Transcript</h2>
-             <p className="text-[10px] text-muted-foreground">AI Memory Active</p>
            </div>
         </div>
       </div>
