@@ -81,7 +81,7 @@ export function SettingsForm() {
             <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
             <p className="text-sm text-muted-foreground hidden sm:block">Manage preferences and privacy controls.</p>
           </div>
-          <Button type="submit" disabled={isSaving} className="min-w-[120px]">
+          <Button type="submit" disabled={isSaving} className="min-w-[120px] cursor-pointer">
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Save Changes
           </Button>

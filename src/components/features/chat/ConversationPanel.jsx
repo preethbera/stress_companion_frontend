@@ -67,15 +67,13 @@ export function ConversationPanel({ messages, input, setInput, onSendMessage }) 
           onSubmit={(e) => { e.preventDefault(); onSendMessage(); }}
           className="flex gap-2 items-center"
         >
-          {/* RESTORED ROUNDED INPUT */}
           <Input 
             placeholder="Type a message..." 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             className="flex-1 bg-muted/30 border-transparent focus:border-primary/20 shadow-none focus-visible:ring-0 h-12 px-6 rounded-full transition-all"
           />
-          {/* RESTORED ROUNDED BUTTON */}
-          <Button type="submit" size="icon" disabled={!input.trim()} className="h-12 w-12 rounded-full shrink-0 shadow-sm hover:scale-105 transition-transform">
+          <Button type="submit" size="icon" disabled={!input.trim()} className="h-12 w-12 rounded-full shrink-0 shadow-sm hover:scale-105 transition-transform cursor-pointer">
             <Send className="h-5 w-5" />
           </Button>
         </form>

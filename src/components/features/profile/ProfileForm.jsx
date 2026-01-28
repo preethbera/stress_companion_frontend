@@ -53,7 +53,7 @@ export function ProfileForm() {
               Update your personal and medical information.
             </p>
           </div>
-          <Button type="submit" disabled={isSaving} className="min-w-[120px]">
+          <Button type="submit" disabled={isSaving} className="min-w-[120px] cursor-pointer">
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Save Changes
           </Button>
