@@ -86,13 +86,23 @@ export default function App() {
               )
             }
           />
-          <Route
+          {/* <Route
             path="/chat"
             element={
               user ? (
                 <Layout user={user} onLogout={handleLogout} fullWidth={true}>
                   <ChatPage />
                 </Layout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          /> */}
+          <Route
+            path="/chat"
+            element={
+              user ? (
+                <ChatPage user={user} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/login" />
               )
