@@ -1,23 +1,26 @@
 import React from "react";
 import { Navbar } from "./Navbar";
 
-/**
- * Layout Component
- * Provides a consistent shell including the Navbar and centered responsive content area.
- */
-export const Layout = ({ children, user, onLogout }) => {
+export const Layout = ({ children, user, onLogout, fullWidth = false }) => {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Top Navigation */}
-      <Navbar user={user} onLogout={onLogout} />
+    // FIX: Changed min-h-screen to h-screen so the app never exceeds the viewport height.
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       
-      {/* Main Content Area:
-          1. container mx-auto: Centers the content horizontally.
-          2. px-4 md:px-8: Responsive horizontal padding (gutter).
-          3. max-w-7xl: Limits width on ultra-wide monitors for better readability.
-          4. flex-1: Ensures the main area grows to fill the screen (useful for footers).
+      {/* Navbar stays fixed at the top */}
+      <div className="shrink-0">
+        <Navbar user={user} onLogout={onLogout} />
+      </div>
+      
+      {/* Main Content:
+          flex-1: Fills remaining space
+          min-h-0: ALLOWS children to shrink and scroll (Critical for chat apps)
+          overflow-hidden: Prevents double scrollbars
       */}
-      <main className="flex-1 container mx-auto px-4 md:px-8 max-w-7xl">
+      <main className={`flex-1 min-h-0 overflow-hidden ${
+        fullWidth 
+          ? "w-full flex flex-col" // Added flex-col to ensure children fill height
+          : "container mx-auto px-4 md:px-8 max-w-7xl overflow-y-auto" // Standard pages can scroll
+      }`}>
         {children}
       </main>
     </div>

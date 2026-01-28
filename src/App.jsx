@@ -90,7 +90,7 @@ export default function App() {
             path="/chat"
             element={
               user ? (
-                <Layout user={user} onLogout={handleLogout}>
+                <Layout user={user} onLogout={handleLogout} fullWidth={true}>
                   <ChatPage />
                 </Layout>
               ) : (

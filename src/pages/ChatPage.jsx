@@ -1,140 +1,171 @@
-import React, { useState, useEffect } from "react";
-import { Mic, MicOff, PhoneOff } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Mic, MicOff, PhoneOff, MessageSquare, Maximize2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { VoiceVisualizer } from "@/components/features/chat/VoiceVisualizer";
 import { ConversationPanel } from "@/components/features/chat/ConversationPanel";
 
 export default function ChatPage() {
   const navigate = useNavigate();
-  
-  // State Management
+
+  // --- STATE ---
   const [messages, setMessages] = useState([
-    { id: Date.now(), role: "assistant", content: "Welcome to your Stress Companion session. How are you feeling today?" }
+    { 
+      id: Date.now(), 
+      role: "assistant", 
+      content: "I'm listening. You can speak freely here. How are you feeling?" 
+    }
   ]);
   const [input, setInput] = useState("");
   const [isMicOn, setIsMicOn] = useState(false);
-  
-  // AI State: 'idle' | 'listening' | 'thinking' | 'speaking'
   const [aiState, setAiState] = useState('idle');
+  const [isChatOpen, setIsChatOpen] = useState(true);
 
-  // Handle Text Sending
-  const handleSendMessage = async () => {
+  // --- RESIZABLE PANEL STATE ---
+  const [chatWidth, setChatWidth] = useState(35);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // --- HANDLERS ---
+  const handleSendMessage = () => {
     if (!input.trim()) return;
-    
-    // 1. Add User Message
     const userMsg = { id: Date.now(), role: "user", content: input };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     
-    // 2. Simulate AI Processing
     setAiState('thinking');
-    
     setTimeout(() => {
-      // 3. Simulate AI Speaking Response
       setAiState('speaking');
-      const aiResponse = { 
-        id: Date.now(), 
-        role: "assistant", 
-        content: "I understand that can be difficult. Let's take a deep breath together. Tell me more about what triggered this feeling." 
-      };
-      setMessages(prev => [...prev, aiResponse]);
-
-      // 4. Return to Idle after "speaking"
-      setTimeout(() => setAiState('idle'), 4000); // AI speaks for 4 seconds
-    }, 1500); // Thinking time
+      const aiMsg = { id: Date.now(), role: "assistant", content: "I understand. Let's focus on that feeling. Take a deep breath with me." };
+      setMessages(prev => [...prev, aiMsg]);
+      setTimeout(() => setAiState(isMicOn ? 'listening' : 'idle'), 4000);
+    }, 1500);
   };
 
-  // Toggle Microphone (Simulates User Speaking)
   const toggleMic = () => {
     const newState = !isMicOn;
     setIsMicOn(newState);
-    
-    // If turning ON, simulate user speaking activity
-    if (newState) {
-      setAiState('listening'); // AI is listening to you
-    } else {
-      setAiState('idle');
+    setAiState(newState ? 'listening' : 'idle');
+  };
+
+  // --- RESIZE LOGIC ---
+  const startResizing = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", stopResizing);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none"; 
+  };
+
+  const stopResizing = () => {
+    setIsDragging(false);
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", stopResizing);
+    document.body.style.cursor = "default";
+    document.body.style.userSelect = "auto";
+  };
+
+  const handleMouseMove = (e) => {
+    const newWidthPercentage = ((window.innerWidth - e.clientX) / window.innerWidth) * 100;
+    if (newWidthPercentage > 20 && newWidthPercentage < 70) {
+      setChatWidth(newWidthPercentage);
     }
   };
 
-  const endSession = () => {
-    // Logic to save session summary could go here
-    navigate("/dashboard");
-  };
-
   return (
-    // Main Container - Full height minus Navbar/Padding
-    <div className="h-[calc(100vh-100px)] w-full max-w-7xl mx-auto py-4 animate-in fade-in duration-500">
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+    <TooltipProvider>
+      {/* OUTER PADDING CONTAINER 
+         Adds breathing room so the "Console" floats in the center 
+      */}
+      <div className="h-full w-full bg-background p-4 md:p-6 overflow-hidden animate-in fade-in duration-500">
         
-        {/* LEFT COLUMN: Voice Visualizer (Spans 2 cols on Large screens) */}
-        <div className="lg:col-span-2 flex flex-col gap-4 h-full">
-          
-          {/* 1. Visualizer Area */}
-          <VoiceVisualizer 
-            aiState={aiState} 
-            isUserSpeaking={isMicOn} // We assume if Mic is ON, user is "active"
-          />
-
-          {/* 2. Control Bar */}
-          <div className="flex items-center gap-4">
-            <Button 
-              size="lg" 
-              className={`flex-1 h-14 text-lg font-medium transition-all ${
-                isMicOn 
-                ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20 shadow-lg" 
-                : "bg-secondary hover:bg-secondary/80 text-foreground"
-              }`}
-              onClick={toggleMic}
-            >
-              {isMicOn ? (
-                <>
-                  <Mic className="mr-2 h-5 w-5 animate-pulse" /> Microphone On
-                </>
-              ) : (
-                <>
-                  <MicOff className="mr-2 h-5 w-5" /> Microphone Off
-                </>
-              )}
-            </Button>
-
-            <Button 
-              size="lg" 
-              variant="destructive"
-              className="flex-1 h-14 text-lg font-medium shadow-red-500/20 shadow-lg"
-              onClick={endSession}
-            >
-              <PhoneOff className="mr-2 h-5 w-5" />
-              End Session
-            </Button>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: Conversation Panel (Spans 1 col) */}
-        <div className="h-full hidden lg:block">
-          <ConversationPanel 
-            messages={messages} 
-            input={input}
-            setInput={setInput}
-            onSendMessage={handleSendMessage}
-          />
-        </div>
-
-        {/* MOBILE ONLY: Conversation Sheet or stacked view? 
-            For now, on mobile, the conversation panel appears below controls.
+        {/* THE MAIN CONSOLE CARD
+           rounded-3xl: Gives the soft, modern "App" feel.
+           overflow-hidden: Ensures children don't bleed out the corners.
+           shadow-2xl: Adds depth.
         */}
-        <div className="h-[400px] lg:hidden">
-           <ConversationPanel 
-            messages={messages} 
-            input={input}
-            setInput={setInput}
-            onSendMessage={handleSendMessage}
-          />
-        </div>
+        <div className="h-full w-full flex rounded-3xl border border-border/50 shadow-2xl overflow-hidden bg-background">
+          
+          {/* === LEFT: Visualizer Area === */}
+          <div className="flex-1 flex flex-col min-w-0 relative bg-slate-950">
+              
+              {/* Visualizer Frame */}
+              <div className="flex-1 relative">
+                
+                {/* Floating Toggle Button */}
+                <div className="absolute top-6 right-6 z-20">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-white/50 hover:text-white hover:bg-white/10 rounded-full h-10 w-10 transition-colors"
+                        onClick={() => setIsChatOpen(!isChatOpen)}
+                      >
+                        {isChatOpen ? <Maximize2 className="h-5 w-5" /> : <MessageSquare className="h-5 w-5" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{isChatOpen ? "Expand Visuals" : "Open Chat"}</p></TooltipContent>
+                  </Tooltip>
+                </div>
+                
+                <VoiceVisualizer aiState={aiState} isUserSpeaking={isMicOn} />
+              </div>
 
+              {/* Controls Bar */}
+              <div className="h-24 shrink-0 flex items-center gap-6 justify-center bg-slate-900/50 backdrop-blur-md border-t border-white/5">
+                <Button 
+                  className={`h-14 min-w-[200px] text-lg font-semibold rounded-full shadow-lg transition-all transform hover:scale-105 ${
+                    isMicOn 
+                    ? "bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-red-500/20" 
+                    : "bg-white text-slate-900 hover:bg-blue-50"
+                  }`}
+                  onClick={toggleMic}
+                >
+                  {isMicOn ? <><Mic className="mr-2 h-5 w-5" /> Stop Listening</> : <><MicOff className="mr-2 h-5 w-5" /> Tap to Speak</>}
+                </Button>
+
+                <Button 
+                  variant="outline"
+                  className="h-14 px-8 text-lg font-semibold rounded-full border-white/10 text-white hover:bg-white/10 hover:text-red-400 hover:border-red-500/50 transition-all"
+                  onClick={() => navigate("/dashboard")}
+                >
+                  <PhoneOff className="mr-2 h-5 w-5" /> End
+                </Button>
+              </div>
+          </div>
+
+          {/* === DRAGGER HANDLE === */}
+          {isChatOpen && (
+            <div 
+              className="w-[1px] hover:w-1 bg-border/50 hover:bg-blue-500 cursor-col-resize z-50 transition-all duration-150 flex flex-col justify-center items-center group -ml-[0.5px] relative"
+              onMouseDown={startResizing}
+            >
+               {/* Visual Pill on Hover */}
+               <div className="h-16 w-1.5 rounded-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity absolute" />
+            </div>
+          )}
+
+          {/* === RIGHT: Chat Panel === */}
+          {isChatOpen && (
+            <div 
+              className={`flex flex-col bg-card h-full ${
+                  isDragging ? 'transition-none pointer-events-none select-none' : 'transition-[width] duration-300 ease-out'
+              }`}
+              style={{ width: `${chatWidth}%` }}
+            >
+               <ConversationPanel 
+                 messages={messages} 
+                 input={input} 
+                 setInput={setInput} 
+                 onSendMessage={handleSendMessage} 
+               />
+            </div>
+          )}
+
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
