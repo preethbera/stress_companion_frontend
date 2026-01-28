@@ -1,13 +1,12 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { Mic, MicOff, PhoneOff, MessageSquare, Maximize2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Navbar } from "@/components/layout/Navbar"; // IMPORT ADDED
+import { Navbar } from "@/components/layout/Navbar";
 import { VoiceVisualizer } from "@/components/features/chat/VoiceVisualizer";
 import { ConversationPanel } from "@/components/features/chat/ConversationPanel";
 
-// ACCEPT PROPS FOR NAVBAR
 export default function ChatPage({ user, onLogout }) {
   const navigate = useNavigate();
 
@@ -77,38 +76,37 @@ export default function ChatPage({ user, onLogout }) {
 
   return (
     <TooltipProvider>
-      {/* FULL PAGE SHELL 
-        h-screen: Forces full viewport height
-        flex-col: Stacks Navbar and Main Content
-      */}
       <div className="h-screen flex flex-col bg-background overflow-hidden">
         
-        {/* 1. NAVBAR (Self-Contained) */}
+        {/* 1. NAVBAR */}
         <Navbar user={user} onLogout={onLogout} />
 
-        {/* 2. MAIN CONTENT AREA (Fills remaining space) */}
+        {/* 2. MAIN CONTENT AREA */}
         <div className="flex-1 min-h-0 w-full p-4 md:p-6 animate-in fade-in duration-500">
           
-          {/* THE MAIN CONSOLE CARD */}
+          {/* MAIN CONSOLE CARD */}
           <div className="h-full w-full flex rounded-3xl border border-border/50 shadow-2xl overflow-hidden bg-background">
             
             {/* === LEFT: Visualizer Area === */}
-            <div className="flex-1 flex flex-col min-w-0 relative bg-slate-950">
+            <div className="flex-1 flex flex-col min-w-0 relative">
                 
-                {/* Visualizer Frame */}
+                {/* Visualizer Component */}
                 <div className="flex-1 relative">
                   
-                  {/* Floating Toggle Button */}
+                  {/* FIX 1: Toggle Button Visibility
+                      Added bg-background/50 backdrop-blur so it stands out against any color 
+                      Changed text color to 'text-foreground' for auto dark/light adaptation
+                  */}
                   <div className="absolute top-6 right-6 z-20">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button 
-                          variant="ghost" 
+                          variant="outline" 
                           size="icon" 
-                          className="text-white/50 hover:text-white hover:bg-white/10 rounded-full h-10 w-10 transition-colors"
+                          className="rounded-full h-10 w-10 bg-background/50 backdrop-blur-sm border-border hover:bg-background transition-colors"
                           onClick={() => setIsChatOpen(!isChatOpen)}
                         >
-                          {isChatOpen ? <Maximize2 className="h-5 w-5" /> : <MessageSquare className="h-5 w-5" />}
+                          {isChatOpen ? <Maximize2 className="h-5 w-5 text-foreground" /> : <MessageSquare className="h-5 w-5 text-foreground" />}
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent><p>{isChatOpen ? "Expand Visuals" : "Open Chat"}</p></TooltipContent>
@@ -118,22 +116,31 @@ export default function ChatPage({ user, onLogout }) {
                   <VoiceVisualizer aiState={aiState} isUserSpeaking={isMicOn} />
                 </div>
 
-                {/* Controls Bar */}
-                <div className="h-24 shrink-0 flex items-center gap-6 justify-center bg-slate-900/50 backdrop-blur-md border-t border-white/5">
+                {/* FIX 2: Controls Bar Background
+                    Removed bg-slate-900. Now uses bg-background (White in light mode / Dark in dark mode).
+                */}
+                <div className="h-24 shrink-0 flex items-center gap-6 justify-center bg-background border-t border-border">
+                  
+                  {/* Mic Button */}
                   <Button 
-                    className={`h-14 min-w-[200px] text-lg font-semibold rounded-full shadow-lg transition-all transform hover:scale-105 ${
+                    className={`h-14 min-w-[200px] text-lg font-semibold rounded-full shadow-md transition-all transform hover:scale-105 ${
                       isMicOn 
-                      ? "bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-red-500/20" 
-                      : "bg-white text-slate-900 hover:bg-blue-50"
+                      ? "bg-red-500 hover:bg-red-600 text-white animate-pulse" 
+                      : "bg-primary hover:bg-primary/90 text-primary-foreground"
                     }`}
                     onClick={toggleMic}
                   >
                     {isMicOn ? <><Mic className="mr-2 h-5 w-5" /> Stop Listening</> : <><MicOff className="mr-2 h-5 w-5" /> Tap to Speak</>}
                   </Button>
 
+                  {/* FIX 3: End Button Visibility
+                      Changed to variant="outline".
+                      Removed 'text-white'. 
+                      Added 'hover:bg-destructive hover:text-white' for the red hover effect.
+                  */}
                   <Button 
                     variant="outline"
-                    className="h-14 px-8 text-lg font-semibold rounded-full border-white/10 text-white hover:bg-white/10 hover:text-red-400 hover:border-red-500/50 transition-all"
+                    className="h-14 px-8 text-lg font-semibold rounded-full border-2 border-border text-foreground hover:bg-destructive hover:text-white hover:border-destructive transition-colors"
                     onClick={() => navigate("/dashboard")}
                   >
                     <PhoneOff className="mr-2 h-5 w-5" /> End
@@ -147,7 +154,6 @@ export default function ChatPage({ user, onLogout }) {
                 className="w-[1px] hover:w-1 bg-border/50 hover:bg-blue-500 cursor-col-resize z-50 transition-all duration-150 flex flex-col justify-center items-center group -ml-[0.5px] relative"
                 onMouseDown={startResizing}
               >
-                 {/* Visual Pill on Hover */}
                  <div className="h-16 w-1.5 rounded-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity absolute" />
               </div>
             )}
