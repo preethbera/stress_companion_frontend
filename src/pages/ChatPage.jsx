@@ -169,8 +169,8 @@ export default function ChatPage({ user, onLogout }) {
       <div className="h-screen flex flex-col bg-background overflow-hidden">
         <Navbar user={user} onLogout={onLogout} />
 
-        <div className="flex-1 min-h-0 w-full p-4 md:p-6 animate-in fade-in duration-500">
-          <div className="h-full w-full flex rounded-3xl border border-border/50 shadow-2xl overflow-hidden bg-background">
+        <div className="flex-1 min-h-0 w-full animate-in fade-in duration-500">
+          <div className="h-full w-full flex border border-border/50 shadow-2xl overflow-hidden bg-background">
             <div className="flex-1 flex flex-col min-w-0 relative">
               <div className="flex-1 relative">
                 <div className="absolute top-6 right-6 z-20">
