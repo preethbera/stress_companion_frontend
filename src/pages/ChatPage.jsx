@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Mic, MicOff, PhoneOff, MessageSquare, Maximize2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+// --- IMPORTS: UI COMPONENTS ---
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -12,13 +14,10 @@ import { Navbar } from "@/components/layout/Navbar";
 import { VoiceVisualizer } from "@/components/features/chat/VoiceVisualizer";
 import { ConversationPanel } from "@/components/features/chat/ConversationPanel";
 
-/* ============================
-   SPEECH API SETUP (LOGIC)
-============================ */
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
-
-let recognition = null;
+// --- IMPORTS: CUSTOM HOOKS ---
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useTextToSpeech } from "@/hooks/useTextToSpeech";
+import { useResizablePanel } from "@/hooks/useResizablePanel";
 
 export default function ChatPage({ user, onLogout }) {
   const navigate = useNavigate();
@@ -32,138 +31,64 @@ export default function ChatPage({ user, onLogout }) {
     },
   ]);
   const [input, setInput] = useState("");
-  const [isMicOn, setIsMicOn] = useState(false);
   const [aiState, setAiState] = useState("idle");
   const [isChatOpen, setIsChatOpen] = useState(true);
 
-  // --- RESIZABLE PANEL STATE ---
-  const [chatWidth, setChatWidth] = useState(40);
-  const [isDragging, setIsDragging] = useState(false);
+  // --- LOGIC: TEXT TO SPEECH ---
+  const { speak } = useTextToSpeech({
+    onSpeakStart: () => setAiState("speaking"),
+    onSpeakEnd: () => setAiState("idle"), // Will be overridden by mic check logic below
+  });
 
-  /* ============================
-     INIT SPEECH RECOGNITION
-  ============================ */
-  useEffect(() => {
-    if (!SpeechRecognition) return;
-
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = "en-US";
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setInput(transcript);
-    };
-
-    recognition.onerror = (event) => {
-      console.error("Speech recognition error:", event.error);
-      setIsMicOn(false);
-      setAiState("idle");
-    };
-
-    recognition.onend = () => {
-      setIsMicOn(false);
-      setAiState("idle");
-
-      if (input.trim()) {
-        handleSendMessage();
-      }
-    };
-
-    return () => {
-      recognition && recognition.stop();
-    };
-  }, [input]);
-
-  /* ============================
-     TEXT → SPEECH (AI VOICE)
-  ============================ */
-  const speak = (text) => {
-    if (!window.speechSynthesis) return;
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 1.2;
-    utterance.pitch = 2;
-
-    setAiState("speaking");
-
-    utterance.onend = () => {
-      setAiState(isMicOn ? "listening" : "idle");
-    };
-
-    window.speechSynthesis.speak(utterance);
-  };
-
-  // --- HANDLERS ---
-  const handleSendMessage = () => {
+  // --- LOGIC: SEND MESSAGE ---
+  // Wrapped in useCallback so hooks can use it safely
+  const handleSendMessage = useCallback(() => {
     if (!input.trim()) return;
 
     const userMsg = { id: Date.now(), role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
+    
+    // Store input locally before clearing, in case you need it for API calls
+    const currentInput = input; 
     setInput("");
-
     setAiState("thinking");
 
+    // Simulated AI Response
     setTimeout(() => {
-      const aiText =
-        "I understand. Let's focus on that feeling. Take a deep breath with me.";
-
+      const aiText = "I understand. Let's focus on that feeling. Take a deep breath with me.";
       const aiMsg = {
         id: Date.now(),
         role: "assistant",
         content: aiText,
       };
-
       setMessages((prev) => [...prev, aiMsg]);
       speak(aiText);
     }, 1500);
-  };
+  }, [input, speak]);
 
-  const toggleMic = () => {
-    if (!SpeechRecognition || !recognition) {
-      alert("Speech recognition is not supported in this browser.");
-      return;
-    }
-
-    if (!isMicOn) {
-      setIsMicOn(true);
-      setAiState("listening");
-      recognition.start();
-    } else {
-      recognition.stop();
-      setIsMicOn(false);
+  // --- LOGIC: SPEECH RECOGNITION ---
+  const { isMicOn, toggleMic } = useSpeechRecognition({
+    onResult: (transcript) => setInput(transcript),
+    onEnd: () => {
+      // Logic from original file: if input exists when mic stops, send it.
+      if (input.trim()) {
+        handleSendMessage();
+      }
       setAiState("idle");
+    },
+  });
+
+  // Sync AI State with Mic (if mic is on, we are 'listening')
+  useEffect(() => {
+    if (isMicOn && aiState === "idle") {
+      setAiState("listening");
     }
-  };
+  }, [isMicOn, aiState]);
 
-  // --- RESIZE LOGIC ---
-  const startResizing = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", stopResizing);
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-  };
+  // --- LOGIC: RESIZABLE PANEL ---
+  const { width: chatWidth, isDragging, startResizing } = useResizablePanel(40);
 
-  const stopResizing = () => {
-    setIsDragging(false);
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", stopResizing);
-    document.body.style.cursor = "default";
-    document.body.style.userSelect = "auto";
-  };
-
-  const handleMouseMove = (e) => {
-    const newWidthPercentage =
-      ((window.innerWidth - e.clientX) / window.innerWidth) * 100;
-    if (newWidthPercentage > 20 && newWidthPercentage < 70) {
-      setChatWidth(newWidthPercentage);
-    }
-  };
-
+  // --- RENDER ---
   return (
     <TooltipProvider>
       <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -171,6 +96,8 @@ export default function ChatPage({ user, onLogout }) {
 
         <div className="flex-1 min-h-0 w-full animate-in fade-in duration-500">
           <div className="h-full w-full flex border border-border/50 shadow-2xl overflow-hidden bg-background">
+            
+            {/* LEFT SIDE: Visuals & Controls */}
             <div className="flex-1 flex flex-col min-w-0 relative">
               <div className="flex-1 relative">
                 <div className="absolute top-6 right-6 z-20">
@@ -195,21 +122,23 @@ export default function ChatPage({ user, onLogout }) {
                   </Tooltip>
                 </div>
 
+                {/* VISUALIZER COMPONENT */}
                 <VoiceVisualizer aiState={aiState} isUserSpeaking={isMicOn} />
               </div>
 
-              <div className="h-20 shrink-0 flex items-center gap-3 justify-center bg-background border-t border-border">
+              {/* FOOTER CONTROLS */}
+              <div className="h-24 shrink-0 flex items-center gap-4 justify-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border relative z-20">
                 <Button
                   className={`!py-6 !px-8 text-lg font-semibold rounded-full cursor-pointer shadow-md transition-all ${
                     isMicOn
-                      ? "bg-red-500 hover:bg-red-600 text-white animate-pulse hover:shadow-lg"
+                      ? "bg-red-500 hover:bg-red-600 text-white hover:shadow-lg scale-105"
                       : "bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg"
                   }`}
                   onClick={toggleMic}
                 >
                   {isMicOn ? (
                     <>
-                      <Mic className="mr-2 h-5 w-5" /> Stop Listening
+                      <Mic className="mr-2 h-5 w-5 animate-pulse" /> Stop Listening
                     </>
                   ) : (
                     <>
@@ -228,6 +157,7 @@ export default function ChatPage({ user, onLogout }) {
               </div>
             </div>
 
+            {/* RESIZER HANDLE */}
             {isChatOpen && (
               <div
                 className="w-[1px] hover:w-1 bg-border/50 hover:bg-blue-500 cursor-col-resize z-50 transition-all duration-150 flex flex-col justify-center items-center group -ml-[0.5px] relative"
@@ -237,6 +167,7 @@ export default function ChatPage({ user, onLogout }) {
               </div>
             )}
 
+            {/* RIGHT SIDE: Chat Panel */}
             {isChatOpen && (
               <div
                 className={`flex flex-col bg-card h-full ${
@@ -260,4 +191,3 @@ export default function ChatPage({ user, onLogout }) {
     </TooltipProvider>
   );
 }
- 
