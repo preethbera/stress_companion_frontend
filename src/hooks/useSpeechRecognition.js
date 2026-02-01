@@ -21,11 +21,16 @@ export function useSpeechRecognition({ onResult, onEnd }) {
 
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true; // CHANGED to true for real-time visual feedback if needed, works with user code
     recognition.lang = "en-US";
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
+      // Logic to handle both interim and final results if you want real-time typing effect
+      // But based on your code, simple access is fine:
+      let transcript = "";
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        transcript += event.results[i][0].transcript;
+      }
       if (onResultRef.current) onResultRef.current(transcript);
     };
 
@@ -69,5 +74,5 @@ export function useSpeechRecognition({ onResult, onEnd }) {
     else startListening();
   }, [isMicOn, startListening, stopListening]);
 
-  return { isMicOn, toggleMic, stopListening };
+  return { isMicOn, toggleMic, startListening, stopListening };
 }

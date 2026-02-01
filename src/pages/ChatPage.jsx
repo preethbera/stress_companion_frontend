@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Mic, MicOff, PhoneOff, MessageSquare, Maximize2 } from "lucide-react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Mic, MicOff, PhoneOff, MessageSquare, Maximize2, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // --- IMPORTS: UI COMPONENTS ---
@@ -18,89 +18,105 @@ import { ConversationPanel } from "@/components/features/chat/ConversationPanel"
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
-import { useGemini } from "@/hooks/useGemini"; // <--- 1. Import the Gemini Hook
+import { useGemini } from "@/hooks/useGemini";
 
 export default function ChatPage({ user, onLogout }) {
   const navigate = useNavigate();
 
   // --- STATE ---
-  const [messages, setMessages] = useState([
-    {
-      id: Date.now(),
-      role: "assistant",
-      content: "I'm listening. You can speak freely here. How are you feeling?",
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [aiState, setAiState] = useState("idle");
   const [isChatOpen, setIsChatOpen] = useState(true);
+  
+  const [hasStarted, setHasStarted] = useState(false);
+  // FIX: Use a ref to track start status immediately for callbacks
+  const hasStartedRef = useRef(false);
 
   // --- LOGIC: GEMINI API ---
-  const { sendMessage, isLoading: isGeminiLoading } = useGemini(); // <--- 2. Initialize Hook
-
-  // --- LOGIC: TEXT TO SPEECH ---
-  const { speak } = useTextToSpeech({
-    onSpeakStart: () => setAiState("speaking"),
-    onSpeakEnd: () => setAiState("idle"),
-  });
-
-  // --- LOGIC: SEND MESSAGE ---
-  const handleSendMessage = useCallback(async () => {
-    if (!input.trim()) return;
-
-    // 1. Add User Message to UI
-    const userMsg = { id: Date.now(), role: "user", content: input };
-    setMessages((prev) => [...prev, userMsg]);
-    
-    // Store input locally and clear state
-    const userText = input; 
-    setInput("");
-    
-    // 2. Set State to 'thinking' so visualizer updates
-    setAiState("thinking");
-
-    try {
-      // 3. Call Gemini API (Real Logic)
-      const aiText = await sendMessage(userText);
-
-      // 4. Add AI Response to UI
-      const aiMsg = {
-        id: Date.now(),
-        role: "assistant",
-        content: aiText,
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-
-      // 5. Speak the response
-      speak(aiText);
-
-    } catch (error) {
-      console.error("Failed to get response:", error);
-      // Optional: Add an error message to chat
-      setAiState("idle");
-    }
-
-  }, [input, sendMessage, speak]);
+  const { sendMessage, isLoading: isGeminiLoading } = useGemini();
 
   // --- LOGIC: SPEECH RECOGNITION ---
-  const { isMicOn, toggleMic } = useSpeechRecognition({
-    onResult: (transcript) => setInput(transcript),
+  const { isMicOn, toggleMic, startListening, stopListening } = useSpeechRecognition({
+    onResult: (transcript) => {
+        setInput(transcript);
+    },
     onEnd: () => {
-      // If there is text when mic stops, send it automatically
-      if (input.trim()) {
-        handleSendMessage();
-      }
       setAiState("idle");
     },
   });
 
-  // Sync AI State with Mic (if mic is on, we are 'listening')
+  // --- LOGIC: TEXT TO SPEECH ---
+  const { speak, isSpeaking } = useTextToSpeech({
+    onSpeakStart: () => {
+        setAiState("speaking");
+        stopListening();
+    },
+    onSpeakEnd: () => {
+      setAiState("idle");
+      // FIX: Check the Ref instead of the state variable
+      // The Ref is guaranteed to be true here, whereas state might be stale in this closure
+      if (hasStartedRef.current) {
+        startListening();
+      }
+    },
+  });
+
+  // --- LOGIC: SEND MESSAGE ---
+  const handleSendMessage = useCallback(async (textOverride) => {
+    const textToSend = typeof textOverride === 'string' ? textOverride : input;
+
+    if (!textToSend.trim()) return;
+
+    const userMsg = { id: Date.now(), role: "user", content: textToSend };
+    setMessages((prev) => [...prev, userMsg]);
+    
+    setInput("");
+    setAiState("thinking");
+    stopListening(); 
+
+    try {
+      const aiText = await sendMessage(textToSend);
+      const aiMsg = { id: Date.now(), role: "assistant", content: aiText };
+      setMessages((prev) => [...prev, aiMsg]);
+      speak(aiText);
+    } catch (error) {
+      console.error("Failed to get response:", error);
+      setAiState("idle");
+    }
+  }, [input, sendMessage, speak, stopListening]);
+
+  // Sync AI State with Mic
   useEffect(() => {
-    // Only show 'listening' if we aren't currently waiting for AI or speaking
     if (isMicOn && aiState === "idle") {
       setAiState("listening");
     }
   }, [isMicOn, aiState]);
+
+  // Effect to handle auto-send on silence
+  useEffect(() => {
+    if (!isMicOn && input.trim() && hasStarted && aiState === 'idle' && !isSpeaking && !isGeminiLoading) {
+        handleSendMessage();
+    }
+  }, [isMicOn, input, hasStarted, aiState, isSpeaking, isGeminiLoading, handleSendMessage]);
+
+  // --- LOGIC: START SESSION ---
+  const handleStartSession = () => {
+    // 1. Update State (triggers render)
+    setHasStarted(true);
+    // 2. Update Ref (available immediately for the upcoming speak callback)
+    hasStartedRef.current = true;
+    
+    const initialMsg = "I'm listening. You can speak freely here. How are you feeling?";
+    
+    setMessages([{
+        id: Date.now(),
+        role: "assistant",
+        content: initialMsg,
+    }]);
+
+    speak(initialMsg);
+  };
 
   // --- LOGIC: RESIZABLE PANEL ---
   const { width: chatWidth, isDragging, startResizing } = useResizablePanel(40);
@@ -140,40 +156,58 @@ export default function ChatPage({ user, onLogout }) {
                 </div>
 
                 {/* VISUALIZER COMPONENT */}
-                <VoiceVisualizer aiState={aiState} isUserSpeaking={isMicOn} />
+                <VoiceVisualizer 
+                    aiState={aiState} 
+                    isUserSpeaking={isMicOn} 
+                    hasStarted={hasStarted} 
+                />
               </div>
 
               {/* FOOTER CONTROLS */}
               <div className="h-24 shrink-0 flex items-center gap-4 justify-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border relative z-20">
-                <Button
-                  className={`!py-6 !px-8 text-lg font-semibold rounded-full cursor-pointer shadow-md transition-all ${
-                    isMicOn
-                      ? "bg-red-500 hover:bg-red-600 text-white hover:shadow-lg scale-105"
-                      : "bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg"
-                  }`}
-                  onClick={toggleMic}
-                  disabled={isGeminiLoading} // 3. Disable mic while AI is thinking
-                >
-                  {isGeminiLoading ? (
-                    <span className="animate-pulse">Thinking...</span>
-                  ) : isMicOn ? (
-                    <>
-                      <Mic className="mr-2 h-5 w-5 animate-pulse" /> Stop Listening
-                    </>
-                  ) : (
-                    <>
-                      <MicOff className="mr-2 h-5 w-5" /> Tap to Speak
-                    </>
-                  )}
-                </Button>
+                
+                {!hasStarted ? (
+                   <Button
+                     className="!py-6 !px-10 text-xl font-bold rounded-full cursor-pointer shadow-lg bg-green-600 hover:bg-green-700 text-white scale-105 transition-transform"
+                     onClick={handleStartSession}
+                   >
+                     <Play className="mr-2 h-6 w-6" /> Start Conversation
+                   </Button>
+                ) : (
+                   <>
+                    <Button
+                      className={`!py-6 !px-8 text-lg font-semibold rounded-full cursor-pointer shadow-md transition-all ${
+                        isMicOn
+                          ? "bg-red-500 hover:bg-red-600 text-white hover:shadow-lg scale-105"
+                          : "bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg"
+                      }`}
+                      onClick={toggleMic}
+                      disabled={isGeminiLoading || isSpeaking}
+                    >
+                      {isGeminiLoading ? (
+                        <span className="animate-pulse">Thinking...</span>
+                      ) : isSpeaking ? (
+                        <span className="animate-pulse">Speaking...</span>
+                      ) : isMicOn ? (
+                        <>
+                          <Mic className="mr-2 h-5 w-5 animate-pulse" /> Stop Listening
+                        </>
+                      ) : (
+                        <>
+                          <MicOff className="mr-2 h-5 w-5" /> Tap to Speak
+                        </>
+                      )}
+                    </Button>
 
-                <Button
-                  variant="outline"
-                  className="!py-6 !px-8 text-lg font-semibold rounded-full border-2 hover:!text-red-500 hover:!border-red-500 transition-colors cursor-pointer"
-                  onClick={() => navigate("/dashboard")}
-                >
-                  <PhoneOff className="mr-2 h-5 w-5" /> End
-                </Button>
+                    <Button
+                      variant="outline"
+                      className="!py-6 !px-8 text-lg font-semibold rounded-full border-2 hover:!text-red-500 hover:!border-red-500 transition-colors cursor-pointer"
+                      onClick={() => navigate("/dashboard")}
+                    >
+                      <PhoneOff className="mr-2 h-5 w-5" /> End
+                    </Button>
+                   </>
+                )}
               </div>
             </div>
 
@@ -202,6 +236,7 @@ export default function ChatPage({ user, onLogout }) {
                   input={input}
                   setInput={setInput}
                   onSendMessage={handleSendMessage}
+                  hasStarted={hasStarted}
                 />
               </div>
             )}
