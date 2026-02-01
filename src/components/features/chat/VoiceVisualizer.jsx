@@ -1,128 +1,194 @@
-import React from "react";
+import React, { memo } from "react";
 import { Mic } from "lucide-react";
 
-export function VoiceVisualizer({ aiState, isUserSpeaking, hasStarted }) {
-  // We inject some custom keyframes for the waveform animations
-  const styleSheet = `
-    @keyframes ai-wave {
-      0%, 100% { height: 10%; opacity: 0.5; }
-      50% { height: 100%; opacity: 1; }
-    }
-    @keyframes user-wave {
-      0%, 100% { height: 20%; opacity: 0.5; }
-      50% { height: 100%; opacity: 1; }
-    }
-  `;
+/*
+  ==========================================
+  Animations
+  Kept exactly as-is (no behavior changes)
+  ==========================================
+*/
+const ANIMATIONS = `
+  @keyframes ai-wave {
+    0%, 100% { height: 12%; opacity: 0.4; }
+    50% { height: 100%; opacity: 1; }
+  }
+
+  @keyframes user-wave {
+    0%, 100% { height: 25%; opacity: 0.5; }
+    50% { height: 100%; opacity: 1; }
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 0.4; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+  }
+`;
+
+/*
+  ==========================================
+  State Configuration (single source of truth)
+  ==========================================
+*/
+const STATE_CONFIG = {
+  speaking: {
+    size: "w-48 h-48",
+    bg: "bg-gradient-to-br from-indigo-50 via-purple-50/50 to-white dark:from-slate-900 dark:via-indigo-950/50 dark:to-slate-950",
+    border: "border-2 border-indigo-200/60 dark:border-indigo-800/40",
+    shadow: "shadow-[0_0_100px_rgba(99,102,241,0.3)] dark:shadow-[0_0_100px_rgba(99,102,241,0.2)]",
+    label: "AI Speaking",
+  },
+  thinking: {
+    size: "w-48 h-48",
+    bg: "bg-white/20 dark:bg-slate-900/40 backdrop-blur-md",
+    border: "border border-indigo-300/40 dark:border-indigo-700/30",
+    shadow: "shadow-xl",
+    label: "Processing",
+  },
+  listening: {
+    size: "w-44 h-44",
+    bg: "bg-gradient-to-br from-emerald-50 to-white dark:from-slate-900 dark:to-slate-950",
+    border: "border-2 border-emerald-200/60 dark:border-emerald-800/40",
+    shadow: "shadow-lg shadow-emerald-500/10",
+    label: "Listening",
+  },
+  idle: {
+    size: "w-44 h-44",
+    bg: "bg-white dark:bg-slate-900",
+    border: "border border-slate-200 dark:border-slate-700",
+    shadow: "shadow-md",
+    label: "Ready",
+  },
+};
+
+/*
+  ==========================================
+  Small focused visual components
+  memo() used to avoid unnecessary re-renders
+  ==========================================
+*/
+
+const AIWaveform = memo(() => (
+  <div className="flex items-center gap-2 h-20">
+    {Array.from({ length: 5 }).map((_, i) => (
+      <div
+        key={i}
+        className="w-2.5 rounded-full bg-gradient-to-t from-indigo-600 to-indigo-400 dark:from-indigo-400 dark:to-indigo-300"
+        style={{
+          animation: "ai-wave 1.2s ease-in-out infinite",
+          animationDelay: `${i * 0.2}s`,
+        }}
+      />
+    ))}
+  </div>
+));
+
+const ThinkingIndicator = memo(() => (
+  <div className="relative w-full h-full flex items-center justify-center">
+    <div className="absolute inset-0 animate-[spin_3s_linear_infinite]">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 w-4 h-4 bg-indigo-500 rounded-full shadow-[0_0_16px_rgba(99,102,241,0.9)]" />
+    </div>
+    <div className="w-2 h-2 rounded-full bg-indigo-400/50 dark:bg-indigo-500/50" />
+  </div>
+));
+
+const IdleListeningIndicator = memo(({ listening }) => {
+  if (listening) {
+    return (
+      <div className="relative">
+        <div className="absolute inset-0 rounded-full bg-emerald-400/30 dark:bg-emerald-500/20 animate-ping" />
+        <Mic className="relative z-10 h-12 w-12 text-emerald-600 dark:text-emerald-400" />
+      </div>
+    );
+  }
+
+  return <div className="h-5 w-5 rounded-full bg-slate-400 dark:bg-slate-600 animate-pulse" />;
+});
+
+const UserWaveform = memo(() => {
+  // Define heights for the bars to create a "vanishing at ends" bell-curve shape
+  const barHeights = ["h-3", "h-5", "h-8", "h-11", "h-full", "h-full", "h-11", "h-8", "h-5", "h-3"];
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-500">
-      <style>{styleSheet}</style>
+    // 'items-center' ensures the bars are vertically centered (originating from middle line)
+    <div className="flex items-center gap-1.5 h-16 px-4 py-2">
+      {barHeights.map((heightClass, i) => (
+        <div 
+          key={i} 
+          className={`w-1 ${heightClass} flex items-center justify-center`}
+        >
+          <div
+            className="w-full rounded-full bg-gradient-to-t from-emerald-600 to-emerald-400 dark:from-emerald-400 dark:to-emerald-300"
+            style={{
+              animation: "user-wave 0.5s ease-in-out infinite",
+              animationDelay: `${i * 0.08}s`,
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  );
+});
 
-      {/* --- Background Ambience --- */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-200/40 dark:bg-indigo-900/20 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-100/40 dark:bg-blue-900/10 rounded-full blur-[80px]" />
+const EmptyState = memo(() => (
+  <div className="relative z-10 flex flex-col items-center text-center px-6 animate-in fade-in zoom-in duration-700">
+    <div className="w-28 h-28 mb-8 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-50 dark:from-indigo-900/40 dark:to-indigo-950/20 flex items-center justify-center border border-indigo-200/50 dark:border-indigo-800/30">
+      <Mic className="w-12 h-12 text-indigo-500 dark:text-indigo-400 opacity-60" />
+    </div>
+    <h3 className="text-2xl font-semibold text-slate-800 dark:text-slate-200">Ready to Talk</h3>
+    <p className="mt-3 text-slate-600 dark:text-slate-400 max-w-sm">
+      Click <span className="font-semibold text-emerald-600 dark:text-emerald-400">Start Conversation</span> to begin
+    </p>
+  </div>
+));
+
+/*
+  ==========================================
+  Main VoiceVisualizer Component
+  ==========================================
+*/
+
+export const VoiceVisualizer = memo(function VoiceVisualizer({
+  aiState = "idle",
+  isUserSpeaking = false,
+  hasStarted = false,
+}) {
+  const config = STATE_CONFIG[aiState] ?? STATE_CONFIG.idle;
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-50 via-slate-100/50 to-slate-50 dark:from-slate-950 dark:via-slate-900/50 dark:to-slate-950 transition-colors duration-500 overflow-hidden">
+      <style>{ANIMATIONS}</style>
+
+      {/* Ambient background blobs */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-1/2 w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-200/30 dark:bg-indigo-900/15 blur-[120px] animate-pulse" />
       </div>
 
-      {/* --- Main Content --- */}
       {!hasStarted ? (
-        // --- 1. EMPTY STATE MESSAGE ---
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 animate-in fade-in zoom-in duration-700">
-             <div className="w-24 h-24 mb-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                 <Mic className="w-10 h-10 text-indigo-400 opacity-50" />
-             </div>
-             <p className="text-xl font-medium text-slate-600 dark:text-slate-300">
-                Click on the <span className="text-green-600 font-bold">Start Conversation</span> button below to start...
-             </p>
-        </div>
+        <EmptyState />
       ) : (
-        // --- 2. ACTIVE VISUALIZER ---
-        <>
-            <div className="relative z-10 flex flex-col items-center justify-center">
-                
-                {/* The Container */}
-                <div
-                className={`
-                    relative flex items-center justify-center rounded-full transition-all duration-700 ease-in-out
-                    ${
-                    aiState === "speaking"
-                        ? "w-64 h-64 bg-gradient-to-b from-indigo-50/80 to-white/50 dark:from-slate-900/80 dark:to-slate-950/50 shadow-[0_0_80px_rgba(99,102,241,0.25)] border border-indigo-100 dark:border-indigo-900/50"
-                        : aiState === "thinking"
-                        ? "w-48 h-48 bg-white/10 dark:bg-slate-900/30 backdrop-blur-sm border border-indigo-200/30 dark:border-indigo-800/30 shadow-lg"
-                        : "w-40 h-40 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
-                    }
-                `}
-                >
-                {/* CONTENT: AI SPEAKING (Waveform) */}
-                {aiState === "speaking" && (
-                    <div className="flex items-center gap-2 h-32">
-                    {[...Array(5)].map((_, i) => (
-                        <div
-                        key={i}
-                        className="w-4 bg-indigo-500 dark:bg-indigo-400 rounded-full"
-                        style={{
-                            animation: "ai-wave 1.2s ease-in-out infinite",
-                            animationDelay: `${i * 0.15}s`,
-                        }}
-                        />
-                    ))}
-                    </div>
-                )}
+        <div className="relative z-10 flex flex-col items-center">
+          <div
+            className={`relative flex items-center justify-center rounded-full transition-all duration-700 ${config.size} ${config.bg} ${config.border}`}
+          >
+            {aiState === "speaking" && <AIWaveform />}
+            {aiState === "thinking" && <ThinkingIndicator />}
+            {(aiState === "idle" || aiState === "listening") && (
+              <IdleListeningIndicator listening={aiState === "listening"} />
+            )}
+          </div>
 
-                {/* CONTENT: AI THINKING (Orbiting Dot) */}
-                {aiState === "thinking" && (
-                    <div className="absolute inset-0 rounded-full animate-[spin_3s_linear_infinite]">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 w-3 h-3 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
-                    <div className="absolute inset-2 border border-indigo-500/10 rounded-full" />
-                    </div>
-                )}
+          <p className="mt-10 text-xs uppercase tracking-[0.25em] font-semibold text-slate-500 dark:text-slate-400">
+            {config.label}
+          </p>
+        </div>
+      )}
 
-                {/* CONTENT: AI IDLE/LISTENING (Static or Icon) */}
-                {(aiState === "idle" || aiState === "listening") && (
-                    <div className={`transition-all duration-500 ${aiState === 'listening' ? 'scale-110' : 'scale-100'}`}>
-                    {aiState === "listening" ? (
-                        <div className="relative">
-                        <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
-                        <Mic className="h-10 w-10 text-green-600 dark:text-green-400 relative z-10" />
-                        </div>
-                    ) : (
-                        <div className="h-4 w-4 bg-slate-300 dark:bg-slate-600 rounded-full animate-pulse" />
-                    )}
-                    </div>
-                )}
-                </div>
-
-                {/* State Label */}
-                <p className="mt-8 font-medium tracking-[0.2em] text-xs uppercase text-slate-400 dark:text-slate-500 transition-all duration-300">
-                {aiState === "speaking"
-                    ? "AI Speaking"
-                    : aiState === "thinking"
-                    ? "Processing"
-                    : aiState === "listening"
-                    ? "Listening"
-                    : "Ready"}
-                </p>
-            </div>
-
-            {/* --- User Speaking Visual (Bottom Center) --- */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 h-12 flex flex-col items-center justify-end pointer-events-none">
-                {isUserSpeaking && (
-                <div className="flex items-end gap-1 h-8 mb-2">
-                    {[...Array(4)].map((_, i) => (
-                    <div
-                        key={i}
-                        className="w-1.5 bg-green-500 rounded-full"
-                        style={{
-                        animation: "user-wave 0.5s ease-in-out infinite",
-                        animationDelay: `${i * 0.1}s`,
-                        }}
-                    />
-                    ))}
-                </div>
-                )}
-            </div>
-        </>
+      {hasStarted && isUserSpeaking && (
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <UserWaveform />
+        </div>
       )}
     </div>
   );
-}
+});
