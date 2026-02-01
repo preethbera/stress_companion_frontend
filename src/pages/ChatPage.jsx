@@ -133,7 +133,7 @@ export default function ChatPage({ user, onLogout }) {
                         variant="outline"
                         size="icon"
                         // UPDATED: rounded-full -> rounded-lg to match theme
-                        className="rounded-lg h-10 w-10 bg-background/50 backdrop-blur-sm border-border hover:bg-background transition-colors cursor-pointer"
+                        className="rounded-full h-10 w-10 bg-background/50 backdrop-blur-sm border-border hover:bg-background transition-colors cursor-pointer"
                         onClick={() => setIsChatOpen(!isChatOpen)}
                       >
                         {isChatOpen ? (
@@ -158,7 +158,7 @@ export default function ChatPage({ user, onLogout }) {
               </div>
 
               {/* FOOTER CONTROLS */}
-              <div className="h-24 shrink-0 flex items-center gap-4 justify-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border relative z-20">
+              <div className="h-20 shrink-0 flex items-center gap-4 justify-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border relative z-20">
                 
                 {!hasStarted ? (
                    <Button

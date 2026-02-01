@@ -12,14 +12,15 @@ export default function Dashboard() {
       {/* === HEADER SECTION === */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Good Morning, Preeth</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Good Morning, Preeth</h1>
           <p className="text-muted-foreground text-lg">
             How are you feeling today?
           </p>
         </div>
         
         {/* Main CTA: Prominent and Rounded */}
-        <Button asChild size="lg" className="rounded-full shadow-lg h-12 px-8">
+        {/* UPDATED: rounded-xl to match theme radius, semantic shadow */}
+        <Button asChild size="lg" className="rounded-xl shadow-lg shadow-primary/20 h-12 px-8 bg-primary text-primary-foreground hover:bg-primary/90">
           <Link to="/chat">
             <MessageCircle className="mr-2 h-5 w-5" />
             Start Session
@@ -42,34 +43,37 @@ export default function Dashboard() {
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           
-          {/* Card 1: Breathing */}
-          <div className="p-6 rounded-xl border bg-card hover:bg-accent/50 hover:shadow-sm transition-all cursor-pointer group flex flex-col items-start text-left">
-            <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Wind className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          {/* Card 1: Breathing (Chart-1 Theme) */}
+          <div className="p-6 rounded-xl border border-border bg-card hover:bg-accent/50 hover:shadow-sm transition-all cursor-pointer group flex flex-col items-start text-left">
+            {/* Using Chart-1 (Blueish) tokens */}
+            <div className="h-10 w-10 rounded-lg bg-chart-1/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Wind className="h-6 w-6 text-chart-1" />
             </div>
-            <h3 className="font-bold text-lg">Guided Breathing</h3>
+            <h3 className="font-bold text-lg text-foreground">Guided Breathing</h3>
             <p className="text-sm text-muted-foreground">
               A 2-minute rhythm to settle your heart rate.
             </p>
           </div>
 
-          {/* Card 2: Stress Journal */}
-          <div className="p-6 rounded-xl border bg-card hover:bg-accent/50 hover:shadow-sm transition-all cursor-pointer group flex flex-col items-start text-left">
-            <div className="h-10 w-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Brain className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+          {/* Card 2: Stress Journal (Chart-2 Theme) */}
+          <div className="p-6 rounded-xl border border-border bg-card hover:bg-accent/50 hover:shadow-sm transition-all cursor-pointer group flex flex-col items-start text-left">
+            {/* Using Chart-2 (Tealish) tokens */}
+            <div className="h-10 w-10 rounded-lg bg-chart-2/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Brain className="h-6 w-6 text-chart-2" />
             </div>
-            <h3 className="font-bold text-lg">Thought Dump</h3>
+            <h3 className="font-bold text-lg text-foreground">Thought Dump</h3>
             <p className="text-sm text-muted-foreground">
               Write down what's bothering you to clear your head.
             </p>
           </div>
 
-          {/* Card 3: Quick Relief */}
-          <div className="p-6 rounded-xl border bg-card hover:bg-accent/50 hover:shadow-sm transition-all cursor-pointer group flex flex-col items-start text-left">
-            <div className="h-10 w-10 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Zap className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+          {/* Card 3: Quick Relief (Chart-3 Theme) */}
+          <div className="p-6 rounded-xl border border-border bg-card hover:bg-accent/50 hover:shadow-sm transition-all cursor-pointer group flex flex-col items-start text-left">
+            {/* Using Chart-3 (Purple/Indigo) tokens */}
+            <div className="h-10 w-10 rounded-lg bg-chart-3/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Zap className="h-6 w-6 text-chart-3" />
             </div>
-            <h3 className="font-bold text-lg">Quick Relief</h3>
+            <h3 className="font-bold text-lg text-foreground">Quick Relief</h3>
             <p className="text-sm text-muted-foreground">
               Instant grounding techniques for acute stress.
             </p>
