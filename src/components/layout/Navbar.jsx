@@ -1,13 +1,16 @@
 import React from "react";
-import { Link } from "react-router-dom"; // CHANGE 1: Import Link
+import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   History,
+  MessageCircle,
   User,
   Settings,
   MessageSquare,
   LogOut,
   Leaf,
+  Menu,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,15 +22,134 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+// --- Configuration Constants ---
+
+const NAV_ITEMS = [
+  {
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/dashboard",
+  },
+  {
+    label: "Chat",
+    icon: MessageCircle,
+    href: "/chat",
+  },
+  {
+    label: "History",
+    icon: History,
+    href: "/history",
+  },
+];
+
+const USER_MENU_ITEMS = [
+  {
+    label: "Profile",
+    icon: User,
+    href: "/profile",
+  },
+  {
+    label: "Settings",
+    icon: Settings,
+    href: "/settings",
+  },
+  {
+    label: "Feedback",
+    icon: MessageSquare,
+    href: "/feedback",
+  },
+];
+
+const AVATAR_SIZES = {
+  small: "h-8 w-8",
+  default: "h-10 w-10",
+};
+
+// --- Sub-Components ---
+
+function NavLink({ item, isActive, className = "", onClick }) {
+  const Icon = item.icon;
+  return (
+    <Link
+      to={item.href}
+      onClick={onClick}
+      className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+        isActive
+          ? "bg-accent text-accent-foreground"
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+      } ${className}`}
+    >
+      <Icon className="h-4 w-4" />
+      {item.label}
+    </Link>
+  );
+}
+
+function UserAvatar({ user, size = "default" }) {
+  return (
+    <Avatar className={`${AVATAR_SIZES[size]} border`}>
+      <AvatarImage src={user?.avatarUrl} alt={user?.name || "User"} />
+      <AvatarFallback>
+        {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+      </AvatarFallback>
+    </Avatar>
+  );
+}
+
+// --- Main Component ---
+
 export function Navbar({ user = null, onLogout }) {
+  const location = useLocation();
+
   return (
     <nav className="border-b bg-background sticky top-0 z-50 w-full">
       <div className="flex h-16 items-center px-4 md:px-8 justify-between">
-        {/* LEFT SECTION: Logo */}
-        <div className="flex items-center gap-2">
-          {/* CHANGE 2: Use Link instead of a tag */}
+        {/* LEFT SECTION: Logo & Mobile Menu */}
+        <div className="flex items-center gap-3">
+          {/* Mobile Menu Sheet */}
+          {user && (
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64">
+                <SheetHeader className="flex-row items-center justify-between space-y-0 border-b h-16">
+                  <SheetTitle className="flex items-center gap-2 text-left px-2">
+                    <Leaf className="h-5 w-5 text-primary" />
+                    Stress Companion
+                  </SheetTitle>
+                  <SheetDescription className="sr-only">
+                    Mobile navigation menu to access dashboard and settings.
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="flex flex-col gap-1 px-2">
+                  {NAV_ITEMS.map((item) => (
+                    <NavLink
+                      key={item.href}
+                      item={item}
+                      isActive={location.pathname === item.href}
+                      className="text-base py-3"
+                    />
+                  ))}
+                </div>
+              </SheetContent>
+            </Sheet>
+          )}
+
+          {/* Logo */}
           <Link
             to="/"
             className="flex items-center gap-2 font-bold text-xl text-primary"
@@ -37,113 +159,76 @@ export function Navbar({ user = null, onLogout }) {
           </Link>
         </div>
 
-        {/* RIGHT SECTION: Navigation & User */}
+        {/* RIGHT SECTION: Desktop Nav & User Actions */}
         <div className="flex items-center gap-4">
-          {/* DESKTOP NAV LINKS - Only visible if user exists */}
+          {/* Desktop Navigation */}
           {user && (
-            <div className="hidden md:flex items-center gap-6 text-sm font-medium mr-2">
-              <Link
-                to="/dashboard"
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                Dashboard
-              </Link>
-              <Link
-                to="/history"
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <History className="h-4 w-4" />
-                History
-              </Link>
-              <div className="h-6 w-px bg-border"></div>
+            <div className="hidden md:flex items-center gap-2 mr-2">
+              {NAV_ITEMS.map((item) => (
+                <NavLink
+                  key={item.href}
+                  item={item}
+                  isActive={location.pathname === item.href}
+                />
+              ))}
+              <div className="h-6 w-px bg-border ml-2"></div>
             </div>
           )}
 
-          {/* AUTH SECTION */}
+          {/* Notifications */}
+          {user && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              aria-label="Notifications"
+            >
+              <Bell className="h-5 w-5" />
+            </Button>
+          )}
+
+          {/* Auth Menu */}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-10 w-10 rounded-full cursor-pointer"
+                  className="relative h-10 w-10 rounded-full"
                 >
-                  <Avatar className="h-10 w-10 border hover:border-primary transition-all">
-                    <AvatarImage src={user.avatarUrl} alt={user.name} />
-                    <AvatarFallback>
-                      {user.name ? user.name.charAt(0) : "U"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar user={user} />
                 </Button>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent className="w-64" align="end" forceMount>
-                {/* Header */}
-                <DropdownMenuLabel className="font-normal p-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border">
-                      <AvatarImage src={user.avatarUrl} alt={user.name} />
-                      <AvatarFallback>
-                        {user.name ? user.name.charAt(0) : "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {user.name}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
-                      </p>
-                    </div>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {user.name}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
                   </div>
                 </DropdownMenuLabel>
-
                 <DropdownMenuSeparator />
-
-                {/* MOBILE ONLY LINKS */}
-                <DropdownMenuGroup className="md:hidden">
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard" className="cursor-pointer">
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/history" className="cursor-pointer">
-                      <History className="mr-2 h-4 w-4" />
-                      <span>History</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </DropdownMenuGroup>
-
-                {/* Standard Menu Items */}
                 <DropdownMenuGroup>
-                  {/* CHANGE 3: Link to Profile Page */}
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/settings" className="cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer">
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    <span>Feedback</span>
-                  </DropdownMenuItem>
+                  {USER_MENU_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <DropdownMenuItem key={item.href} asChild>
+                        <Link to={item.href} className="cursor-pointer">
+                          <Icon className="mr-2 h-4 w-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
                 </DropdownMenuGroup>
-
                 <DropdownMenuSeparator />
-
                 <DropdownMenuItem
-                  className="text-red-600 focus:text-red-600 cursor-pointer focus:bg-red-50"
-                  onSelect={(event) => {
-                    event.preventDefault();
+                  className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                  onSelect={(e) => {
+                    e.preventDefault();
                     onLogout();
                   }}
                 >
@@ -153,7 +238,6 @@ export function Navbar({ user = null, onLogout }) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            // LOGGED OUT STATE
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/login">Log in</Link>
