@@ -18,6 +18,7 @@ import { ConversationPanel } from "@/components/features/chat/ConversationPanel"
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
+import { useGemini } from "@/hooks/useGemini"; // <--- 1. Import the Gemini Hook
 
 export default function ChatPage({ user, onLogout }) {
   const navigate = useNavigate();
@@ -34,43 +35,58 @@ export default function ChatPage({ user, onLogout }) {
   const [aiState, setAiState] = useState("idle");
   const [isChatOpen, setIsChatOpen] = useState(true);
 
+  // --- LOGIC: GEMINI API ---
+  const { sendMessage, isLoading: isGeminiLoading } = useGemini(); // <--- 2. Initialize Hook
+
   // --- LOGIC: TEXT TO SPEECH ---
   const { speak } = useTextToSpeech({
     onSpeakStart: () => setAiState("speaking"),
-    onSpeakEnd: () => setAiState("idle"), // Will be overridden by mic check logic below
+    onSpeakEnd: () => setAiState("idle"),
   });
 
   // --- LOGIC: SEND MESSAGE ---
-  // Wrapped in useCallback so hooks can use it safely
-  const handleSendMessage = useCallback(() => {
+  const handleSendMessage = useCallback(async () => {
     if (!input.trim()) return;
 
+    // 1. Add User Message to UI
     const userMsg = { id: Date.now(), role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
     
-    // Store input locally before clearing, in case you need it for API calls
-    const currentInput = input; 
+    // Store input locally and clear state
+    const userText = input; 
     setInput("");
+    
+    // 2. Set State to 'thinking' so visualizer updates
     setAiState("thinking");
 
-    // Simulated AI Response
-    setTimeout(() => {
-      const aiText = "I understand. Let's focus on that feeling. Take a deep breath with me.";
+    try {
+      // 3. Call Gemini API (Real Logic)
+      const aiText = await sendMessage(userText);
+
+      // 4. Add AI Response to UI
       const aiMsg = {
         id: Date.now(),
         role: "assistant",
         content: aiText,
       };
       setMessages((prev) => [...prev, aiMsg]);
+
+      // 5. Speak the response
       speak(aiText);
-    }, 1500);
-  }, [input, speak]);
+
+    } catch (error) {
+      console.error("Failed to get response:", error);
+      // Optional: Add an error message to chat
+      setAiState("idle");
+    }
+
+  }, [input, sendMessage, speak]);
 
   // --- LOGIC: SPEECH RECOGNITION ---
   const { isMicOn, toggleMic } = useSpeechRecognition({
     onResult: (transcript) => setInput(transcript),
     onEnd: () => {
-      // Logic from original file: if input exists when mic stops, send it.
+      // If there is text when mic stops, send it automatically
       if (input.trim()) {
         handleSendMessage();
       }
@@ -80,6 +96,7 @@ export default function ChatPage({ user, onLogout }) {
 
   // Sync AI State with Mic (if mic is on, we are 'listening')
   useEffect(() => {
+    // Only show 'listening' if we aren't currently waiting for AI or speaking
     if (isMicOn && aiState === "idle") {
       setAiState("listening");
     }
@@ -135,8 +152,11 @@ export default function ChatPage({ user, onLogout }) {
                       : "bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg"
                   }`}
                   onClick={toggleMic}
+                  disabled={isGeminiLoading} // 3. Disable mic while AI is thinking
                 >
-                  {isMicOn ? (
+                  {isGeminiLoading ? (
+                    <span className="animate-pulse">Thinking...</span>
+                  ) : isMicOn ? (
                     <>
                       <Mic className="mr-2 h-5 w-5 animate-pulse" /> Stop Listening
                     </>
