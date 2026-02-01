@@ -21,7 +21,7 @@ export function useSpeechRecognition({ onResult, onEnd }) {
 
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
-    recognition.interimResults = true; // CHANGED to true for real-time visual feedback if needed, works with user code
+    recognition.interimResults = true;
     recognition.lang = "en-US";
 
     recognition.onresult = (event) => {

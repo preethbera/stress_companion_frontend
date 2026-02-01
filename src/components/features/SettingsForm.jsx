@@ -89,10 +89,7 @@ export function SettingsForm() {
 
         {/* === SECTION 1: APPEARANCE === */}
         <div className="space-y-6">
-          <div>
             <h3 className="text-lg font-medium">Interface Theme</h3>
-            <p className="text-sm text-muted-foreground">Select your preferred color scheme.</p>
-          </div>
           <FormField
             control={form.control}
             name="appearance.theme_mode"
@@ -131,10 +128,8 @@ export function SettingsForm() {
 
         {/* === SECTION 2: CHAT PREFERENCES === */}
         <div className="space-y-6">
-          <div>
             <h3 className="text-lg font-medium">Chat Experience</h3>
-            <p className="text-sm text-muted-foreground">Customize how the AI talks to you.</p>
-          </div>
+
           
           <div className="grid gap-6 md:grid-cols-2">
             <FormField control={form.control} name="conversational_preferences.preferred_name_in_chat" render={({ field }) => (
@@ -224,10 +219,7 @@ export function SettingsForm() {
 
         {/* === SECTION 3: PRIVACY & CONSENT === */}
         <div className="space-y-6">
-          <div>
             <h3 className="text-lg font-medium">Privacy Controls</h3>
-            <p className="text-sm text-muted-foreground">Manage data permissions.</p>
-          </div>
           <div className="space-y-4">
             {privacyToggles.map((item) => (
               <FormField
@@ -254,10 +246,7 @@ export function SettingsForm() {
 
         {/* === SECTION 4: DATA & REGIONAL === */}
         <div className="space-y-6">
-          <div>
             <h3 className="text-lg font-medium">Data & Regional</h3>
-            <p className="text-sm text-muted-foreground">Set your time and date preferences.</p>
-          </div>
           
           <div className="grid gap-6 md:grid-cols-2">
              <FormField control={form.control} name="regional.timezone" render={({ field }) => (
