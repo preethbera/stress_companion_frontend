@@ -68,7 +68,7 @@ export function ProfileForm() {
         {/* Tabs Navigation */}
         <Tabs defaultValue="general" className="w-full">
           {/* UPDATED: rounded-md for the container and h-12 for better touch targets */}
-          <TabsList className="grid w-full grid-cols-4 lg:w-[600px] mb-8 rounded-md bg-muted h-12 p-1">
+          <TabsList className="grid w-full grid-cols-4 mb-8 rounded-md bg-muted h-12 p-1">
             {/* UPDATED: rounded-lg for the inner triggers */}
             <TabsTrigger value="general" className="rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">General</TabsTrigger>
             <TabsTrigger value="health" className="rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">Health</TabsTrigger>

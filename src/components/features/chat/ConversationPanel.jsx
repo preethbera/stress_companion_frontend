@@ -98,7 +98,7 @@ export function ConversationPanel({
       </div>
 
       {/* FOOTER */}
-      <div className="p-4 border-t border-border bg-card shrink-0">
+      <div className="h-20 p-4 border-t border-border bg-card shrink-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();

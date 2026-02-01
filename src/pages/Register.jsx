@@ -6,7 +6,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="flex-1 flex items-center justify-center p-4 py-8">
+      <div className="flex-1 flex items-center justify-center p-4">
         <RegisterForm />
       </div>
     </div>
