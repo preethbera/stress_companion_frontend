@@ -46,14 +46,20 @@ export function ProfileForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         
         {/* Sticky Header with Glassmorphism */}
-        <div className="sticky top-[64px] z-30 -mx-4 px-4 py-4 bg-background/80 backdrop-blur-md border-b flex items-center justify-between">
+        {/* UPDATED: Added border-border explicitly */}
+        <div className="sticky top-[64px] z-30 -mx-4 px-4 py-4 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Profile</h1>
             <p className="text-sm text-muted-foreground hidden sm:block">
               Update your personal and medical information.
             </p>
           </div>
-          <Button type="submit" disabled={isSaving} className="min-w-[120px] cursor-pointer">
+          <Button 
+            type="submit" 
+            disabled={isSaving} 
+            // UPDATED: rounded-md to match other forms
+            className="min-w-[120px] cursor-pointer rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+          >
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Save Changes
           </Button>
@@ -61,11 +67,13 @@ export function ProfileForm() {
 
         {/* Tabs Navigation */}
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[600px] mb-8">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="health">Health</TabsTrigger>
-            <TabsTrigger value="lifestyle">Lifestyle</TabsTrigger>
-            <TabsTrigger value="psych">Psychology</TabsTrigger>
+          {/* UPDATED: rounded-md for the container and h-12 for better touch targets */}
+          <TabsList className="grid w-full grid-cols-4 lg:w-[600px] mb-8 rounded-md bg-muted h-12 p-1">
+            {/* UPDATED: rounded-lg for the inner triggers */}
+            <TabsTrigger value="general" className="rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">General</TabsTrigger>
+            <TabsTrigger value="health" className="rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">Health</TabsTrigger>
+            <TabsTrigger value="lifestyle" className="rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">Lifestyle</TabsTrigger>
+            <TabsTrigger value="psych" className="rounded-md data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">Psychology</TabsTrigger>
           </TabsList>
 
           {/* Tab Contents - Passing 'form' context automatically via <Form> wrapper */}

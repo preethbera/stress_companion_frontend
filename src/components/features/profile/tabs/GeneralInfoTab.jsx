@@ -14,16 +14,17 @@ export function GeneralInfoTab({ form }) {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium">Personal Identity</h3>
+            <h3 className="text-lg font-medium text-foreground">Personal Identity</h3>
             <p className="text-sm text-muted-foreground">Basic information to identify your profile.</p>
           </div>
           {/* USER AVATAR COMPONENT */}
           <div className="relative cursor-pointer group">
+            {/* Avatars remain circular (rounded-full) as per standard design patterns */}
             <Avatar className="h-16 w-16 border-2 border-border group-hover:border-primary transition-colors">
               <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback className="text-lg bg-muted">U</AvatarFallback>
+              <AvatarFallback className="text-lg bg-muted text-muted-foreground">U</AvatarFallback>
             </Avatar>
-            <div className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1 shadow-md">
+            <div className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 shadow-md border-2 border-background">
               <Camera className="h-3 w-3" />
             </div>
           </div>
@@ -33,7 +34,8 @@ export function GeneralInfoTab({ form }) {
           <FormField control={form.control} name="identity.full_name" render={({ field }) => (
             <FormItem>
               <FormLabel>Full Name</FormLabel>
-              <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
+              {/* UPDATED: rounded-md */}
+              <FormControl><Input placeholder="John Doe" {...field} className="rounded-md bg-background" /></FormControl>
               <FormMessage />
             </FormItem>
           )} />
@@ -41,7 +43,8 @@ export function GeneralInfoTab({ form }) {
           <FormField control={form.control} name="identity.age" render={({ field }) => (
             <FormItem>
               <FormLabel>Age</FormLabel>
-              <FormControl><Input type="number" {...field} /></FormControl>
+              {/* UPDATED: rounded-md */}
+              <FormControl><Input type="number" {...field} className="rounded-md bg-background" /></FormControl>
               <FormMessage />
             </FormItem>
           )} />
@@ -51,11 +54,13 @@ export function GeneralInfoTab({ form }) {
               <FormLabel>Gender</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger className="w-full"> {/* Full Width */}
+                  {/* UPDATED: rounded-md */}
+                  <SelectTrigger className="w-full rounded-md bg-background">
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                {/* UPDATED: rounded-md */}
+                <SelectContent className="rounded-md">
                   <SelectItem value="male">Male</SelectItem>
                   <SelectItem value="female">Female</SelectItem>
                   <SelectItem value="non_binary">Non-binary</SelectItem>
@@ -68,18 +73,19 @@ export function GeneralInfoTab({ form }) {
           <FormField control={form.control} name="identity.country" render={({ field }) => (
             <FormItem>
               <FormLabel>Country</FormLabel>
-              <FormControl><Input placeholder="India" {...field} /></FormControl>
+              {/* UPDATED: rounded-md */}
+              <FormControl><Input placeholder="India" {...field} className="rounded-md bg-background" /></FormControl>
             </FormItem>
           )} />
         </div>
       </div>
 
-      <Separator />
+      <Separator className="bg-border" />
 
       {/* SECTION: DEMOGRAPHICS */}
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium">Demographics</h3>
+          <h3 className="text-lg font-medium text-foreground">Demographics</h3>
           <p className="text-sm text-muted-foreground">Education and professional background.</p>
         </div>
         
@@ -89,11 +95,13 @@ export function GeneralInfoTab({ form }) {
               <FormLabel>Education Level</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger className="w-full"> {/* Full Width */}
+                  {/* UPDATED: rounded-md */}
+                  <SelectTrigger className="w-full rounded-md bg-background">
                     <SelectValue placeholder="Select level" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                {/* UPDATED: rounded-md */}
+                <SelectContent className="rounded-md">
                   <SelectItem value="high_school">High School</SelectItem>
                   <SelectItem value="undergraduate">Undergraduate</SelectItem>
                   <SelectItem value="postgraduate">Postgraduate</SelectItem>
@@ -108,11 +116,13 @@ export function GeneralInfoTab({ form }) {
               <FormLabel>Current Role</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger className="w-full"> {/* Full Width */}
+                  {/* UPDATED: rounded-md */}
+                  <SelectTrigger className="w-full rounded-md bg-background">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                {/* UPDATED: rounded-md */}
+                <SelectContent className="rounded-md">
                   <SelectItem value="student">Student</SelectItem>
                   <SelectItem value="professional">Professional</SelectItem>
                   <SelectItem value="unemployed">Unemployed</SelectItem>

@@ -83,6 +83,7 @@ function NavLink({ item, isActive, className = "", onClick }) {
     <Link
       to={item.href}
       onClick={onClick}
+      // UPDATED: rounded-md -> rounded-md
       className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
         isActive
           ? "bg-accent text-accent-foreground"
@@ -97,9 +98,10 @@ function NavLink({ item, isActive, className = "", onClick }) {
 
 function UserAvatar({ user, size = "default" }) {
   return (
-    <Avatar className={`${AVATAR_SIZES[size]} border`}>
+    // UPDATED: Added border-border explicitly
+    <Avatar className={`${AVATAR_SIZES[size]} border border-border`}>
       <AvatarImage src={user?.avatarUrl} alt={user?.name || "User"} />
-      <AvatarFallback>
+      <AvatarFallback className="bg-muted text-muted-foreground">
         {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
       </AvatarFallback>
     </Avatar>
@@ -112,7 +114,8 @@ export function Navbar({ user = null, onLogout }) {
   const location = useLocation();
 
   return (
-    <nav className="border-b bg-background sticky top-0 z-50 w-full">
+    // UPDATED: bg-background and border-border
+    <nav className="border-b border-border bg-background sticky top-0 z-50 w-full">
       <div className="flex h-16 items-center px-4 md:px-8 justify-between">
         {/* LEFT SECTION: Logo & Mobile Menu */}
         <div className="flex items-center gap-3">
@@ -125,17 +128,17 @@ export function Navbar({ user = null, onLogout }) {
                   <span className="sr-only">Toggle menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-64">
-                <SheetHeader className="flex-row items-center justify-between space-y-0 border-b h-16">
+              <SheetContent side="left" className="w-64 border-r border-border bg-background">
+                <SheetHeader className="flex-row items-center justify-between space-y-0 border-b border-border h-16">
                   <SheetTitle className="flex items-center gap-2 text-left px-2">
                     <Leaf className="h-5 w-5 text-primary" />
-                    Stress Companion
+                    <span className="text-primary">Stress Companion</span>
                   </SheetTitle>
                   <SheetDescription className="sr-only">
                     Mobile navigation menu to access dashboard and settings.
                   </SheetDescription>
                 </SheetHeader>
-                <div className="flex flex-col gap-1 px-2">
+                <div className="flex flex-col gap-1 px-2 pt-4">
                   {NAV_ITEMS.map((item) => (
                     <NavLink
                       key={item.href}
@@ -155,7 +158,7 @@ export function Navbar({ user = null, onLogout }) {
             className="flex items-center gap-2 font-bold text-xl text-primary"
           >
             <Leaf className="h-5 w-5" />
-            <span className="hidden sm:inline">Stress Companion</span>
+            <span className="hidden sm:inline text-primary">Stress Companion</span>
           </Link>
         </div>
 
@@ -180,7 +183,7 @@ export function Navbar({ user = null, onLogout }) {
             <Button
               variant="ghost"
               size="icon"
-              className="relative"
+              className="relative text-muted-foreground hover:text-foreground"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
@@ -193,18 +196,20 @@ export function Navbar({ user = null, onLogout }) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
+                  // Avatars are circular by definition, so rounded-full is correct here
                   className="relative h-10 w-10 rounded-full"
                 >
                   <UserAvatar user={user} />
                 </Button>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent className="w-56" align="end" forceMount>
+              {/* UPDATED: Added border-border */}
+              <DropdownMenuContent className="w-56 border-border bg-popover" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex items-center gap-4">
                     <UserAvatar user={user}  />
                     <div className="flex flex-col space-y-1.5">
-                      <p className="text-sm font-medium leading-none">
+                      <p className="text-sm font-medium leading-none text-foreground">
                         {user.name}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
@@ -213,13 +218,13 @@ export function Navbar({ user = null, onLogout }) {
                     </div>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuGroup>
                   {USER_MENU_ITEMS.map((item) => {
                     const Icon = item.icon;
                     return (
-                      <DropdownMenuItem key={item.href} asChild>
-                        <Link to={item.href} className="cursor-pointer">
+                      <DropdownMenuItem key={item.href} asChild className="focus:bg-accent focus:text-accent-foreground cursor-pointer">
+                        <Link to={item.href}>
                           <Icon className="mr-2 h-4 w-4" />
                           <span>{item.label}</span>
                         </Link>
@@ -227,9 +232,10 @@ export function Navbar({ user = null, onLogout }) {
                     );
                   })}
                 </DropdownMenuGroup>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem
-                  className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                  // UPDATED: Replaced hardcoded red-600/red-50 with destructive tokens
+                  className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
                   onSelect={(e) => {
                     e.preventDefault();
                     onLogout();
@@ -242,10 +248,10 @@ export function Navbar({ user = null, onLogout }) {
             </DropdownMenu>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" asChild>
+              <Button variant="ghost" size="sm" asChild className="rounded-md">
                 <Link to="/login">Log in</Link>
               </Button>
-              <Button size="sm" asChild>
+              <Button size="sm" asChild className="rounded-md">
                 <Link to="/signup">Sign up</Link>
               </Button>
             </div>

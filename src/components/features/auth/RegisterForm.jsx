@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom"; // Import Link for client-side routing
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,18 +31,20 @@ export function RegisterForm() {
   }
 
   return (
-    <Card className="w-full max-w-lg mx-auto shadow-lg">
+    // UPDATED: rounded-md, border-border, bg-card
+    <Card className="w-full max-w-lg mx-auto shadow-md rounded-md border-border bg-card">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">
+        <CardTitle className="text-2xl font-bold text-center text-foreground">
           Create an account
         </CardTitle>
-        <CardDescription className="text-center">
+        <CardDescription className="text-center text-muted-foreground">
           Enter your information below to create your account
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Google Sign Up */}
-        <Button variant="outline" className="w-full" disabled={isLoading}>
+        {/* UPDATED: rounded-md */}
+        <Button variant="outline" className="w-full rounded-md border-input hover:bg-accent hover:text-accent-foreground" disabled={isLoading}>
           <svg
             className="mr-2 h-4 w-4"
             aria-hidden="true"
@@ -62,7 +65,7 @@ export function RegisterForm() {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <Separator />
+            <Separator className="bg-border" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">
@@ -74,16 +77,19 @@ export function RegisterForm() {
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name" className="text-foreground">Full Name</Label>
+              {/* UPDATED: rounded-md */}
               <Input
                 id="name"
                 placeholder="John Doe"
                 required
                 disabled={isLoading}
+                className="rounded-md bg-background border-input"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="age">Age</Label>
+              <Label htmlFor="age" className="text-foreground">Age</Label>
+              {/* UPDATED: rounded-md */}
               <Input
                 id="age"
                 type="number"
@@ -92,19 +98,21 @@ export function RegisterForm() {
                 max="120"
                 required
                 disabled={isLoading}
+                className="rounded-md bg-background border-input"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="gender">Gender</Label>
+            <Label htmlFor="gender" className="text-foreground">Gender</Label>
             <Select>
-              {/* ADD className="w-full" HERE */}
-              <SelectTrigger id="gender" className="w-full">
+              {/* UPDATED: rounded-md */}
+              <SelectTrigger id="gender" className="w-full rounded-md bg-background border-input">
                 <SelectValue placeholder="Select gender" />
               </SelectTrigger>
 
-              <SelectContent>
+              {/* UPDATED: rounded-md */}
+              <SelectContent className="rounded-md bg-popover border-border">
                 <SelectItem value="male">Male</SelectItem>
                 <SelectItem value="female">Female</SelectItem>
                 <SelectItem value="non-binary">Non-binary</SelectItem>
@@ -114,46 +122,51 @@ export function RegisterForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-foreground">Email</Label>
+            {/* UPDATED: rounded-md */}
             <Input
               id="email"
               type="email"
               placeholder="m@example.com"
               required
               disabled={isLoading}
+              className="rounded-md bg-background border-input"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-foreground">Password</Label>
+            {/* UPDATED: rounded-md */}
             <Input
               id="password"
               type="password"
               required
               disabled={isLoading}
+              className="rounded-md bg-background border-input"
             />
           </div>
 
           {/* Terms Checkbox */}
           <div className="flex items-start space-x-2">
-            <Checkbox id="terms" required />
+            <Checkbox id="terms" required className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" />
             <Label
               htmlFor="terms"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
             >
               I agree to the{" "}
-              <a href="/terms" className="text-primary hover:underline">
+              <Link to="/terms" className="text-primary hover:underline">
                 Terms of Service
-              </a>{" "}
+              </Link>{" "}
               and{" "}
-              <a href="/privacy" className="text-primary hover:underline">
+              <Link to="/privacy" className="text-primary hover:underline">
                 Privacy Policy
-              </a>
+              </Link>
               .
             </Label>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          {/* UPDATED: rounded-md */}
+          <Button type="submit" className="w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
             {isLoading ? "Creating account..." : "Create Account"}
           </Button>
         </form>
@@ -161,9 +174,9 @@ export function RegisterForm() {
       <CardFooter className="flex justify-center">
         <div className="text-sm text-muted-foreground">
           Already have an account?{" "}
-          <a href="/login" className="text-primary hover:underline font-medium">
+          <Link to="/login" className="text-primary hover:underline font-medium">
             Sign in
-          </a>
+          </Link>
         </div>
       </CardFooter>
     </Card>

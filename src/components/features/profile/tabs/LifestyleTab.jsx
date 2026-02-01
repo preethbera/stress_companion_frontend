@@ -1,5 +1,5 @@
 import React from "react";
-import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,7 +14,7 @@ export function LifestyleTab({ form }) {
       {/* SECTION: HABITS */}
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium">Daily Habits</h3>
+          <h3 className="text-lg font-medium text-foreground">Daily Habits</h3>
           <p className="text-sm text-muted-foreground">Your routine and activity levels.</p>
         </div>
 
@@ -24,11 +24,13 @@ export function LifestyleTab({ form }) {
               <FormLabel>Physical Activity</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger className="w-full"> {/* Full Width */}
+                  {/* UPDATED: rounded-md */}
+                  <SelectTrigger className="w-full rounded-md bg-background">
                     <SelectValue placeholder="Select level" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                {/* UPDATED: rounded-md */}
+                <SelectContent className="rounded-md">
                   <SelectItem value="low">Low (Sedentary)</SelectItem>
                   <SelectItem value="medium">Medium (Moderate)</SelectItem>
                   <SelectItem value="high">High (Active)</SelectItem>
@@ -40,18 +42,19 @@ export function LifestyleTab({ form }) {
           <FormField control={form.control} name="lifestyle.daily_screen_time_hours" render={({ field }) => (
             <FormItem>
               <FormLabel>Daily Screen Time (Hours)</FormLabel>
-              <FormControl><Input type="number" step="0.5" {...field} /></FormControl>
+              {/* UPDATED: rounded-md */}
+              <FormControl><Input type="number" step="0.5" {...field} className="rounded-md bg-background" /></FormControl>
             </FormItem>
           )} />
         </div>
       </div>
 
-      <Separator />
+      <Separator className="bg-border" />
 
       {/* SECTION: STRESS DOMAINS */}
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium">Stress Sources</h3>
+          <h3 className="text-lg font-medium text-foreground">Stress Sources</h3>
           <p className="text-sm text-muted-foreground">Select the primary areas causing stress.</p>
         </div>
 
@@ -71,6 +74,7 @@ export function LifestyleTab({ form }) {
                       >
                         <FormControl>
                           <Checkbox
+                            className="rounded-md border-input data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                             checked={field.value?.includes(item)}
                             onCheckedChange={(checked) => {
                               return checked
@@ -83,7 +87,7 @@ export function LifestyleTab({ form }) {
                             }}
                           />
                         </FormControl>
-                        <FormLabel className="font-normal capitalize cursor-pointer">
+                        <FormLabel className="font-normal capitalize cursor-pointer text-foreground">
                           {item}
                         </FormLabel>
                       </FormItem>

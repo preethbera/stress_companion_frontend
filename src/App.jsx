@@ -16,38 +16,6 @@ const History = () => (
 export default function App() {
   const [user, setUser] = useState(null);
 
-  // useEffect(() => {
-  //   // HTTP test (fine to keep here)
-  //   fetch("http://localhost:8000/api/ping")
-  //     .then((res) => res.json())
-  //     .then(console.log);
-
-  //   // WebSocket
-  //   const ws = new WebSocket("ws://localhost:8000/api/ws");
-
-  //   ws.onopen = () => {
-  //     console.log("WS connected");
-  //     ws.send("hello");
-  //   };
-
-  //   ws.onmessage = (e) => {
-  //     console.log("WS message:", e.data);
-  //   };
-
-  //   ws.onerror = (err) => {
-  //     console.error("WS error:", err);
-  //   };
-
-  //   ws.onclose = () => {
-  //     console.log("WS closed");
-  //   };
-
-  //   // CLEANUP (VERY IMPORTANT)
-  //   return () => {
-  //     ws.close();
-  //   };
-  // }, []);
-
   useEffect(() => {
     const storedUser = localStorage.getItem("stress_companion_user");
     if (storedUser) {
@@ -118,18 +86,6 @@ export default function App() {
               )
             }
           />
-          {/* <Route
-            path="/chat"
-            element={
-              user ? (
-                <Layout user={user} onLogout={handleLogout} fullWidth={true}>
-                  <ChatPage />
-                </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          /> */}
           <Route
             path="/chat"
             element={

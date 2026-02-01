@@ -75,13 +75,17 @@ export function SettingsForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-16 w-full">
         
         {/* === STICKY HEADER === */}
-        {/* Matches ProfileForm: -mx-4 to stretch full width, backdrop blur for glass effect */}
-        <div className="sticky top-[64px] z-30 -mx-4 px-4 py-4 bg-background/80 backdrop-blur-md border-b flex items-center justify-between mb-6">
+        <div className="sticky top-[64px] z-30 -mx-4 px-4 py-4 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Settings</h1>
             <p className="text-sm text-muted-foreground hidden sm:block">Manage preferences and privacy controls.</p>
           </div>
-          <Button type="submit" disabled={isSaving} className="min-w-[120px] cursor-pointer">
+          <Button 
+            type="submit" 
+            disabled={isSaving} 
+            // UPDATED: rounded-md for consistency with ChatPage
+            className="min-w-[120px] rounded-md cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+          >
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Save Changes
           </Button>
@@ -89,7 +93,7 @@ export function SettingsForm() {
 
         {/* === SECTION 1: APPEARANCE === */}
         <div className="space-y-6">
-            <h3 className="text-lg font-medium">Interface Theme</h3>
+            <h3 className="text-lg font-medium text-foreground">Interface Theme</h3>
           <FormField
             control={form.control}
             name="appearance.theme_mode"
@@ -99,8 +103,7 @@ export function SettingsForm() {
                   <RadioGroup
                     onValueChange={handleThemeChange}
                     defaultValue={field.value}
-                    // Fixed: Tighter grid (gap-2) and consistent columns
-                    className="grid grid-cols-3 gap-2"
+                    className="grid grid-cols-3 gap-3"
                   >
                     {[
                       { value: "light", icon: Sun, label: "Light" },
@@ -108,9 +111,10 @@ export function SettingsForm() {
                       { value: "system", icon: Monitor, label: "System" },
                     ].map((theme) => (
                       <FormItem key={theme.value}>
-                        <FormLabel className="[&:has([data-state=checked])>div]:border-primary [&:has([data-state=checked])>div]:bg-accent cursor-pointer">
+                        <FormLabel className="[&:has([data-state=checked])>div]:border-primary [&:has([data-state=checked])>div]:bg-primary/5 cursor-pointer">
                           <FormControl><RadioGroupItem value={theme.value} className="sr-only" /></FormControl>
-                          <div className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground transition-all h-24 w-full">
+                          {/* UPDATED: rounded-md and popover background */}
+                          <div className="flex flex-col items-center justify-center rounded-md border-2 border-border bg-card p-4 hover:bg-muted/50 hover:text-foreground transition-all h-24 w-full">
                             <theme.icon className="h-6 w-6 mb-2" />
                             <span className="font-medium text-sm">{theme.label}</span>
                           </div>
@@ -124,18 +128,18 @@ export function SettingsForm() {
           />
         </div>
 
-        <Separator className="my-6" />
+        <Separator className="my-6 bg-border" />
 
         {/* === SECTION 2: CHAT PREFERENCES === */}
         <div className="space-y-6">
-            <h3 className="text-lg font-medium">Chat Experience</h3>
+            <h3 className="text-lg font-medium text-foreground">Chat Experience</h3>
 
-          
           <div className="grid gap-6 md:grid-cols-2">
             <FormField control={form.control} name="conversational_preferences.preferred_name_in_chat" render={({ field }) => (
               <FormItem>
                 <FormLabel>Preferred Name</FormLabel>
-                <FormControl><Input placeholder="Preeth" {...field} className="w-full" /></FormControl>
+                {/* UPDATED: rounded-md */}
+                <FormControl><Input placeholder="Preeth" {...field} className="w-full rounded-md border-input bg-background" /></FormControl>
               </FormItem>
             )} />
 
@@ -143,8 +147,10 @@ export function SettingsForm() {
               <FormItem>
                 <FormLabel>Tone Style</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger className="w-full"><SelectValue /></SelectTrigger></FormControl>
-                  <SelectContent>
+                  {/* UPDATED: rounded-md */}
+                  <FormControl><SelectTrigger className="w-full rounded-md border-input bg-background"><SelectValue /></SelectTrigger></FormControl>
+                  {/* UPDATED: rounded-md for dropdown content */}
+                  <SelectContent className="rounded-md border-border bg-popover">
                     <SelectItem value="formal">Formal & Objective</SelectItem>
                     <SelectItem value="friendly">Friendly & Casual</SelectItem>
                     <SelectItem value="supportive">Empathetic & Supportive</SelectItem>
@@ -157,8 +163,9 @@ export function SettingsForm() {
               <FormItem>
                 <FormLabel>Response Length</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger className="w-full"><SelectValue /></SelectTrigger></FormControl>
-                  <SelectContent>
+                  {/* UPDATED: rounded-md */}
+                  <FormControl><SelectTrigger className="w-full rounded-md border-input bg-background"><SelectValue /></SelectTrigger></FormControl>
+                  <SelectContent className="rounded-md border-border bg-popover">
                     <SelectItem value="short">Short</SelectItem>
                     <SelectItem value="medium">Balanced</SelectItem>
                     <SelectItem value="detailed">Detailed</SelectItem>
@@ -171,8 +178,9 @@ export function SettingsForm() {
               <FormItem>
                 <FormLabel>Feedback Style</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger className="w-full"><SelectValue /></SelectTrigger></FormControl>
-                  <SelectContent>
+                  {/* UPDATED: rounded-md */}
+                  <FormControl><SelectTrigger className="w-full rounded-md border-input bg-background"><SelectValue /></SelectTrigger></FormControl>
+                  <SelectContent className="rounded-md border-border bg-popover">
                     <SelectItem value="direct">Direct</SelectItem>
                     <SelectItem value="gentle">Gentle</SelectItem>
                   </SelectContent>
@@ -196,6 +204,7 @@ export function SettingsForm() {
                         <FormItem key={item} className="flex flex-row items-start space-x-3 space-y-0">
                           <FormControl>
                             <Checkbox
+                              className="rounded-md border-input data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                               checked={field.value?.includes(item)}
                               onCheckedChange={(checked) => {
                                 return checked
@@ -204,7 +213,7 @@ export function SettingsForm() {
                               }}
                             />
                           </FormControl>
-                          <FormLabel className="font-normal capitalize cursor-pointer">{item}</FormLabel>
+                          <FormLabel className="font-normal capitalize cursor-pointer text-foreground">{item}</FormLabel>
                         </FormItem>
                       )
                     }}
@@ -215,11 +224,11 @@ export function SettingsForm() {
           )} />
         </div>
 
-        <Separator className="my-6" />
+        <Separator className="my-6 bg-border" />
 
         {/* === SECTION 3: PRIVACY & CONSENT === */}
         <div className="space-y-6">
-            <h3 className="text-lg font-medium">Privacy Controls</h3>
+            <h3 className="text-lg font-medium text-foreground">Privacy Controls</h3>
           <div className="space-y-4">
             {privacyToggles.map((item) => (
               <FormField
@@ -227,10 +236,11 @@ export function SettingsForm() {
                 control={form.control}
                 name={item.name}
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                  // UPDATED: rounded-md for the card container
+                  <FormItem className="flex flex-row items-center justify-between rounded-md border border-border p-4 shadow-sm bg-card hover:bg-muted/20 transition-colors">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base font-medium">{item.label}</FormLabel>
-                      <FormDescription className="text-xs sm:text-sm">{item.desc}</FormDescription>
+                      <FormLabel className="text-base font-medium text-foreground">{item.label}</FormLabel>
+                      <FormDescription className="text-xs sm:text-sm text-muted-foreground">{item.desc}</FormDescription>
                     </div>
                     <FormControl>
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -242,19 +252,20 @@ export function SettingsForm() {
           </div>
         </div>
 
-        <Separator className="my-6" />
+        <Separator className="my-6 bg-border" />
 
         {/* === SECTION 4: DATA & REGIONAL === */}
         <div className="space-y-6">
-            <h3 className="text-lg font-medium">Data & Regional</h3>
+            <h3 className="text-lg font-medium text-foreground">Data & Regional</h3>
           
           <div className="grid gap-6 md:grid-cols-2">
              <FormField control={form.control} name="regional.timezone" render={({ field }) => (
               <FormItem>
                 <FormLabel>Timezone</FormLabel>
-                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger className="w-full"><SelectValue /></SelectTrigger></FormControl>
-                  <SelectContent>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  {/* UPDATED: rounded-md */}
+                  <FormControl><SelectTrigger className="w-full rounded-md border-input bg-background"><SelectValue /></SelectTrigger></FormControl>
+                  <SelectContent className="rounded-md border-border bg-popover">
                     <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
                     <SelectItem value="America/New_York">New York (EST)</SelectItem>
                     <SelectItem value="Europe/London">London (GMT)</SelectItem>
@@ -267,8 +278,9 @@ export function SettingsForm() {
               <FormItem>
                 <FormLabel>Data Retention Policy</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger className="w-full"><SelectValue /></SelectTrigger></FormControl>
-                  <SelectContent>
+                  {/* UPDATED: rounded-md */}
+                  <FormControl><SelectTrigger className="w-full rounded-md border-input bg-background"><SelectValue /></SelectTrigger></FormControl>
+                  <SelectContent className="rounded-md border-border bg-popover">
                     <SelectItem value="session_only">Session Only</SelectItem>
                     <SelectItem value="days">Specific Days</SelectItem>
                     <SelectItem value="indefinite">Indefinite</SelectItem>
@@ -280,16 +292,18 @@ export function SettingsForm() {
              <FormField control={form.control} name="data_retention.retention_days" render={({ field }) => (
               <FormItem>
                 <FormLabel>Retention Period (Days)</FormLabel>
-                <FormControl><Input type="number" {...field} disabled={form.watch("data_retention.retention_policy") !== "days"} className="w-full" /></FormControl>
+                {/* UPDATED: rounded-md */}
+                <FormControl><Input type="number" {...field} disabled={form.watch("data_retention.retention_policy") !== "days"} className="w-full rounded-md border-input bg-background" /></FormControl>
               </FormItem>
             )} />
 
             <FormField control={form.control} name="regional.language" render={({ field }) => (
               <FormItem>
                 <FormLabel>Language</FormLabel>
-                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger className="w-full"><SelectValue /></SelectTrigger></FormControl>
-                  <SelectContent>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  {/* UPDATED: rounded-md */}
+                  <FormControl><SelectTrigger className="w-full rounded-md border-input bg-background"><SelectValue /></SelectTrigger></FormControl>
+                  <SelectContent className="rounded-md border-border bg-popover">
                     <SelectItem value="en">English</SelectItem>
                     <SelectItem value="hi">Hindi</SelectItem>
                     <SelectItem value="es">Spanish</SelectItem>
@@ -300,10 +314,11 @@ export function SettingsForm() {
           </div>
 
            <FormField control={form.control} name="data_retention.auto_delete_enabled" render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+              // UPDATED: rounded-md for the card container
+              <FormItem className="flex flex-row items-center justify-between rounded-md border border-border p-4 shadow-sm bg-card hover:bg-muted/20 transition-colors">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-base font-medium">Auto-Delete Old Data</FormLabel>
-                  <FormDescription className="text-xs sm:text-sm">Permanently remove data past retention period.</FormDescription>
+                  <FormLabel className="text-base font-medium text-foreground">Auto-Delete Old Data</FormLabel>
+                  <FormDescription className="text-xs sm:text-sm text-muted-foreground">Permanently remove data past retention period.</FormDescription>
                 </div>
                 <FormControl>
                   <Switch checked={field.value} onCheckedChange={field.onChange} />

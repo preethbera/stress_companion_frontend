@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Mic, MicOff, PhoneOff, MessageSquare, Maximize2, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// --- IMPORTS: UI COMPONENTS ---
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -14,7 +13,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { VoiceVisualizer } from "@/components/features/chat/VoiceVisualizer";
 import { ConversationPanel } from "@/components/features/chat/ConversationPanel";
 
-// --- IMPORTS: CUSTOM HOOKS ---
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
@@ -30,7 +28,6 @@ export default function ChatPage({ user, onLogout }) {
   const [isChatOpen, setIsChatOpen] = useState(true);
   
   const [hasStarted, setHasStarted] = useState(false);
-  // FIX: Use a ref to track start status immediately for callbacks
   const hasStartedRef = useRef(false);
 
   // --- LOGIC: GEMINI API ---
@@ -54,8 +51,6 @@ export default function ChatPage({ user, onLogout }) {
     },
     onSpeakEnd: () => {
       setAiState("idle");
-      // FIX: Check the Ref instead of the state variable
-      // The Ref is guaranteed to be true here, whereas state might be stale in this closure
       if (hasStartedRef.current) {
         startListening();
       }
@@ -102,9 +97,7 @@ export default function ChatPage({ user, onLogout }) {
 
   // --- LOGIC: START SESSION ---
   const handleStartSession = () => {
-    // 1. Update State (triggers render)
     setHasStarted(true);
-    // 2. Update Ref (available immediately for the upcoming speak callback)
     hasStartedRef.current = true;
     
     const initialMsg = "I'm listening. You can speak freely here. How are you feeling?";
@@ -128,7 +121,7 @@ export default function ChatPage({ user, onLogout }) {
         <Navbar user={user} onLogout={onLogout} />
 
         <div className="flex-1 min-h-0 w-full animate-in fade-in duration-500">
-          <div className="h-full w-full flex border border-border/50 shadow-2xl overflow-hidden bg-background">
+          <div className="h-full w-full flex border border-border shadow-2xl overflow-hidden bg-background">
             
             {/* LEFT SIDE: Visuals & Controls */}
             <div className="flex-1 flex flex-col min-w-0 relative">
@@ -139,7 +132,8 @@ export default function ChatPage({ user, onLogout }) {
                       <Button
                         variant="outline"
                         size="icon"
-                        className="rounded-full h-10 w-10 bg-background/50 backdrop-blur-sm border-border hover:bg-background transition-colors cursor-pointer"
+                        // UPDATED: rounded-full -> rounded-lg to match theme
+                        className="rounded-lg h-10 w-10 bg-background/50 backdrop-blur-sm border-border hover:bg-background transition-colors cursor-pointer"
                         onClick={() => setIsChatOpen(!isChatOpen)}
                       >
                         {isChatOpen ? (
@@ -168,7 +162,8 @@ export default function ChatPage({ user, onLogout }) {
                 
                 {!hasStarted ? (
                    <Button
-                     className="!py-6 !px-10 text-xl font-bold rounded-full cursor-pointer shadow-lg bg-green-600 hover:bg-green-700 text-white scale-105 transition-transform"
+                     // UPDATED: rounded-full -> rounded-xl to match theme
+                     className="!py-6 !px-10 text-xl font-bold rounded-xl cursor-pointer shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 scale-105 transition-transform"
                      onClick={handleStartSession}
                    >
                      <Play className="mr-2 h-6 w-6" /> Start Conversation
@@ -176,10 +171,11 @@ export default function ChatPage({ user, onLogout }) {
                 ) : (
                    <>
                     <Button
-                      className={`!py-6 !px-8 text-lg font-semibold rounded-full cursor-pointer shadow-md transition-all ${
+                      // UPDATED: rounded-full -> rounded-xl
+                      className={`!py-6 !px-8 text-lg font-semibold rounded-xl cursor-pointer shadow-md transition-all ${
                         isMicOn
-                          ? "bg-red-500 hover:bg-red-600 text-white hover:shadow-lg scale-105"
-                          : "bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg"
+                          ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-lg scale-105"
+                          : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg"
                       }`}
                       onClick={toggleMic}
                       disabled={isGeminiLoading || isSpeaking}
@@ -201,7 +197,8 @@ export default function ChatPage({ user, onLogout }) {
 
                     <Button
                       variant="outline"
-                      className="!py-6 !px-8 text-lg font-semibold rounded-full border-2 hover:!text-red-500 hover:!border-red-500 transition-colors cursor-pointer"
+                      // UPDATED: rounded-full -> rounded-xl
+                      className="!py-6 !px-8 text-lg font-semibold rounded-xl border-2 border-border hover:border-destructive hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                       onClick={() => navigate("/dashboard")}
                     >
                       <PhoneOff className="mr-2 h-5 w-5" /> End
@@ -214,10 +211,11 @@ export default function ChatPage({ user, onLogout }) {
             {/* RESIZER HANDLE */}
             {isChatOpen && (
               <div
-                className="w-[1px] hover:w-1 bg-border/50 hover:bg-blue-500 cursor-col-resize z-50 transition-all duration-150 flex flex-col justify-center items-center group -ml-[0.5px] relative"
+                className="w-[1px] hover:w-1 bg-border hover:bg-primary cursor-col-resize z-50 transition-all duration-150 flex flex-col justify-center items-center group -ml-[0.5px] relative"
                 onMouseDown={startResizing}
               >
-                <div className="h-16 w-1.5 rounded-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity absolute" />
+                {/* UPDATED: rounded-full -> rounded-sm (pill shape via radius) */}
+                <div className="h-16 w-1.5 rounded-sm bg-primary opacity-0 group-hover:opacity-100 transition-opacity absolute" />
               </div>
             )}
 

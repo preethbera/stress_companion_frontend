@@ -14,7 +14,7 @@ export function HealthTab({ form }) {
       {/* SECTION: BIOMETRICS */}
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium">Biometrics</h3>
+          <h3 className="text-lg font-medium text-foreground">Biometrics</h3>
           <p className="text-sm text-muted-foreground">Physical health metrics.</p>
         </div>
         
@@ -22,20 +22,23 @@ export function HealthTab({ form }) {
           <FormField control={form.control} name="biometric.height_cm" render={({ field }) => (
             <FormItem>
               <FormLabel>Height (cm)</FormLabel>
-              <FormControl><Input type="number" {...field} /></FormControl>
+              {/* UPDATED: rounded-md */}
+              <FormControl><Input type="number" {...field} className="rounded-md bg-background" /></FormControl>
             </FormItem>
           )} />
           
           <FormField control={form.control} name="biometric.weight_kg" render={({ field }) => (
             <FormItem>
               <FormLabel>Weight (kg)</FormLabel>
-              <FormControl><Input type="number" {...field} /></FormControl>
+              {/* UPDATED: rounded-md */}
+              <FormControl><Input type="number" {...field} className="rounded-md bg-background" /></FormControl>
             </FormItem>
           )} />
           
           <FormField control={form.control} name="biometric.glasses" render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm h-10 mt-auto">
-              <FormLabel className="text-sm font-medium mb-0 mr-2 cursor-pointer">Glasses</FormLabel>
+            // UPDATED: rounded-md, explicit border color, and background
+            <FormItem className="flex flex-row items-center justify-between rounded-md border border-border bg-background p-3 shadow-sm h-10 mt-auto">
+              <FormLabel className="text-sm font-medium mb-0 mr-2 cursor-pointer text-foreground">Glasses</FormLabel>
               <FormControl>
                 <Switch checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
@@ -44,12 +47,12 @@ export function HealthTab({ form }) {
         </div>
       </div>
 
-      <Separator />
+      <Separator className="bg-border" />
 
       {/* SECTION: MEDICAL HISTORY (Checkboxes) */}
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium">Medical History</h3>
+          <h3 className="text-lg font-medium text-foreground">Medical History</h3>
           <p className="text-sm text-muted-foreground">Select all conditions that apply to you.</p>
         </div>
         
@@ -69,6 +72,7 @@ export function HealthTab({ form }) {
                       >
                         <FormControl>
                           <Checkbox
+                            className="rounded-md border-input data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                             checked={field.value?.includes(condition)}
                             onCheckedChange={(checked) => {
                               return checked
@@ -81,7 +85,7 @@ export function HealthTab({ form }) {
                             }}
                           />
                         </FormControl>
-                        <FormLabel className="font-normal capitalize cursor-pointer">
+                        <FormLabel className="font-normal capitalize cursor-pointer text-foreground">
                           {condition}
                         </FormLabel>
                       </FormItem>
