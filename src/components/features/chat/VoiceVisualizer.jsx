@@ -124,7 +124,6 @@ const UserWaveform = memo(() => {
           key={i} 
           className={`w-1 ${heightClass} flex items-center justify-center`}
         >
-          {/* Replaced Emerald gradient with Chart-2 gradient */}
           <div
             className="w-full rounded-full bg-gradient-to-t from-chart-2 to-chart-2/50"
             style={{
@@ -142,7 +141,7 @@ const EmptyState = memo(() => (
   <div className="relative z-10 flex flex-col items-center text-center px-6 animate-in fade-in zoom-in duration-700">
     {/* Replaced indigo/slate hexes with semantic surface tokens */}
     <div className="w-28 h-28 mb-8 rounded-full bg-primary/5 flex items-center justify-center border border-primary/10">
-      <Mic className="w-12 h-12 text-primary/60" />
+      <Mic className="w-12 h-12 text-primary" />
     </div>
     <h3 className="text-2xl font-semibold text-foreground">Ready to Talk</h3>
     <p className="mt-3 text-muted-foreground max-w-sm">
