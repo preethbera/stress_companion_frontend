@@ -121,18 +121,19 @@ export default function ChatPage({ user, onLogout }) {
         <Navbar user={user} onLogout={onLogout} />
 
         <div className="flex-1 min-h-0 w-full animate-in fade-in duration-500">
-          <div className="h-full w-full flex border border-border shadow-2xl overflow-hidden bg-background">
+          {/* UPDATED: Added flex-col for mobile, lg:flex-row for desktop */}
+          <div className="h-full w-full flex flex-col lg:flex-row border border-border shadow-2xl overflow-hidden bg-background">
             
             {/* LEFT SIDE: Visuals & Controls */}
-            <div className="flex-1 flex flex-col min-w-0 relative">
-              <div className="flex-1 relative">
-                <div className="absolute top-6 right-6 z-20">
+            {/* UPDATED: Added min-h control and shrinking for mobile stack */}
+            <div className={`flex flex-col min-w-0 relative transition-all duration-300 ${isChatOpen ? 'h-[45%] lg:h-auto lg:flex-1' : 'h-full flex-1'}`}>
+              <div className="flex-1 relative min-h-0">
+                <div className="absolute top-4 right-4 lg:top-6 lg:right-6 z-20">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="outline"
                         size="icon"
-                        // UPDATED: rounded-full -> rounded-lg to match theme
                         className="rounded-full h-10 w-10 bg-background/50 backdrop-blur-sm border-border hover:bg-background transition-colors cursor-pointer"
                         onClick={() => setIsChatOpen(!isChatOpen)}
                       >
@@ -158,21 +159,20 @@ export default function ChatPage({ user, onLogout }) {
               </div>
 
               {/* FOOTER CONTROLS */}
-              <div className="h-20 shrink-0 flex items-center gap-4 justify-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border relative z-20">
+              {/* UPDATED: Adjusted padding and button sizes for mobile responsiveness */}
+              <div className="h-auto py-4 lg:py-0 lg:h-20 shrink-0 flex items-center gap-3 lg:gap-4 justify-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border relative z-20 px-4">
                 
                 {!hasStarted ? (
                    <Button
-                     // UPDATED: rounded-full -> rounded-xl to match theme
-                     className="!py-6 !px-10 text-xl font-bold rounded-xl cursor-pointer shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 scale-105 transition-transform"
+                     className="!py-4 !px-6 lg:!py-6 lg:!px-10 text-lg lg:text-xl font-bold rounded-xl cursor-pointer shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 scale-105 transition-transform"
                      onClick={handleStartSession}
                    >
-                     <Play className="mr-2 h-6 w-6" /> Start Conversation
+                     <Play className="mr-2 h-5 w-5 lg:h-6 lg:w-6" /> Start Conversation
                    </Button>
                 ) : (
                    <>
                     <Button
-                      // UPDATED: rounded-full -> rounded-xl
-                      className={`!py-6 !px-8 text-lg font-semibold rounded-xl cursor-pointer shadow-md transition-all ${
+                      className={`!py-4 !px-6 lg:!py-6 lg:!px-8 text-base lg:text-lg font-semibold rounded-xl cursor-pointer shadow-md transition-all ${
                         isMicOn
                           ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-lg scale-105"
                           : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg"
@@ -186,22 +186,21 @@ export default function ChatPage({ user, onLogout }) {
                         <span className="animate-pulse">Speaking...</span>
                       ) : isMicOn ? (
                         <>
-                          <Mic className="mr-2 h-5 w-5 animate-pulse" /> Stop Listening
+                          <Mic className="mr-2 h-5 w-5 animate-pulse" /> <span className="hidden sm:inline">Stop Listening</span><span className="sm:hidden">Stop</span>
                         </>
                       ) : (
                         <>
-                          <MicOff className="mr-2 h-5 w-5" /> Tap to Speak
+                          <MicOff className="mr-2 h-5 w-5" /> <span className="hidden sm:inline">Tap to Speak</span><span className="sm:hidden">Speak</span>
                         </>
                       )}
                     </Button>
 
                     <Button
                       variant="outline"
-                      // UPDATED: rounded-full -> rounded-xl
-                      className="!py-6 !px-8 text-lg font-semibold rounded-xl border-2 border-border hover:border-destructive hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                      className="!py-4 !px-6 lg:!py-6 lg:!px-8 text-base lg:text-lg font-semibold rounded-xl border-2 border-border hover:border-destructive hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                       onClick={() => navigate("/dashboard")}
                     >
-                      <PhoneOff className="mr-2 h-5 w-5" /> End
+                      <PhoneOff className="mr-2 h-5 w-5" /> <span className="hidden sm:inline">End</span>
                     </Button>
                    </>
                 )}
@@ -209,12 +208,12 @@ export default function ChatPage({ user, onLogout }) {
             </div>
 
             {/* RESIZER HANDLE */}
+            {/* UPDATED: Added 'hidden lg:flex' to hide resizer on mobile */}
             {isChatOpen && (
               <div
-                className="w-[1px] hover:w-1 bg-border hover:bg-primary cursor-col-resize z-50 transition-all duration-150 flex flex-col justify-center items-center group -ml-[0.5px] relative"
+                className="hidden lg:flex w-[1px] hover:w-1 bg-border hover:bg-primary cursor-col-resize z-50 transition-all duration-150 flex-col justify-center items-center group -ml-[0.5px] relative"
                 onMouseDown={startResizing}
               >
-                {/* UPDATED: rounded-full -> rounded-sm (pill shape via radius) */}
                 <div className="h-16 w-1.5 rounded-sm bg-primary opacity-0 group-hover:opacity-100 transition-opacity absolute" />
               </div>
             )}
@@ -222,7 +221,8 @@ export default function ChatPage({ user, onLogout }) {
             {/* RIGHT SIDE: Chat Panel */}
             {isChatOpen && (
               <div
-                className={`flex flex-col bg-card h-full ${
+                // UPDATED: Added min-w-full for mobile to override inline width, and flex-1 for vertical fill
+                className={`flex flex-col bg-card min-w-full lg:min-w-0 flex-1 lg:flex-none border-t lg:border-t-0 border-border ${
                   isDragging
                     ? "transition-none pointer-events-none select-none"
                     : "transition-[width] duration-300 ease-out"
