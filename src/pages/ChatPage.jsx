@@ -269,7 +269,7 @@ export default function ChatPage({ user, onLogout }) {
                         variant="outline"
                         size="icon"
                         aria-label={isChatOpen ? "Expand Visuals" : "Open Chat"}
-                        className="rounded-lg h-10 w-10 bg-background/50 backdrop-blur-sm border-border hover:bg-background transition-colors cursor-pointer"
+                        className="rounded-full h-10 w-10 bg-background/50 backdrop-blur-sm border-border hover:bg-background transition-colors cursor-pointer"
                         onClick={() => setIsChatOpen(!isChatOpen)}
                       >
                         {isChatOpen ? (
