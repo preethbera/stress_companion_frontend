@@ -9,13 +9,25 @@ export function ConversationPanel({
   input,
   setInput,
   onSendMessage,
-  hasStarted, 
+  hasStarted,
 }) {
   const scrollEndRef = useRef(null);
+  
+  // 1. Create a ref to access the actual DOM input element
+  const inputRef = useRef(null);
 
+  // Scroll to bottom of chat messages (Existing logic)
   useEffect(() => {
     scrollEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // 2. NEW EFFECT: Auto-scroll the input box to the right when text changes
+  useEffect(() => {
+    if (inputRef.current) {
+      // Set the horizontal scroll position to the total width of the content
+      inputRef.current.scrollLeft = inputRef.current.scrollWidth;
+    }
+  }, [input]);
 
   return (
     <div className="flex flex-col h-full bg-card overflow-hidden">
@@ -37,7 +49,7 @@ export function ConversationPanel({
           }
           .custom-scrollbar::-webkit-scrollbar-thumb { 
             background-color: var(--border); 
-            border-radius: var(--radius); /* UPDATED: Matches theme radius */
+            border-radius: var(--radius); 
           }
           .custom-scrollbar::-webkit-scrollbar-thumb:hover { 
             background-color: var(--muted-foreground); 
@@ -80,7 +92,6 @@ export function ConversationPanel({
                   className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"} max-w-[85%]`}
                 >
                   <div
-                    // UPDATED: rounded-2xl -> rounded-xl (Matches theme logic)
                     className={`px-5 py-3 text-sm shadow-sm leading-relaxed ${
                       msg.role === "user"
                         ? "bg-primary text-primary-foreground rounded-xl rounded-tr-sm"
@@ -107,18 +118,18 @@ export function ConversationPanel({
           className="flex gap-2 items-center"
         >
           <Input
+            // 3. Attach the ref here
+            ref={inputRef}
             placeholder="Type a message..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={!hasStarted}
-            // UPDATED: rounded-full -> rounded-xl
             className="flex-1 bg-muted/30 border-transparent focus:border-primary/20 shadow-none focus-visible:ring-0 h-12 px-6 rounded-xl transition-all text-foreground placeholder:text-muted-foreground"
           />
           <Button
             type="submit"
             size="icon"
             disabled={!input.trim() || !hasStarted}
-            // UPDATED: rounded-full -> rounded-xl
             className="h-12 w-12 rounded-xl shrink-0 shadow-sm hover:scale-105 transition-transform cursor-pointer"
           >
             <Send className="h-5 w-5" />
