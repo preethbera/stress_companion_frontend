@@ -166,7 +166,7 @@ export function Navbar({ user = null, onLogout }) {
         <div className="flex items-center gap-4">
           {/* Desktop Navigation */}
           {user && (
-            <div className="hidden md:flex items-center gap-2 mr-2">
+            <div className="hidden md:flex items-center gap-2">
               {NAV_ITEMS.map((item) => (
                 <NavLink
                   key={item.href}
