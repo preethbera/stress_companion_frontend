@@ -22,7 +22,7 @@ export function useSpeechRecognition({ onResult, onEnd }) {
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = true;
-    recognition.lang = "en-US";
+    recognition.lang = "en-IN";
 
     recognition.onresult = (event) => {
       // Logic to handle both interim and final results if you want real-time typing effect

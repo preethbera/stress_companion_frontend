@@ -27,77 +27,9 @@ import { ConversationPanel } from "@/components/features/chat/ConversationPanel"
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useResizablePanel } from "@/hooks/useResizablePanel";
+import { useMobileResizer } from "../hooks/useMobileResizer";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useGemini } from "@/hooks/useGemini";
-
-// --- UTILITY HOOKS ---
-
-/**
- * Hook to safely detect screen size for responsive logic (avoids hydration errors)
- */
-function useMediaQuery(query) {
-  const [matches, setMatches] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    if (media.matches !== matches) {
-      setMatches(media.matches);
-    }
-    const listener = () => setMatches(media.matches);
-    media.addEventListener("change", listener);
-    return () => media.removeEventListener("change", listener);
-  }, [matches, query]);
-
-  return matches;
-}
-
-/**
- * Hook to handle vertical resizing on mobile devices
- */
-function useMobileResizer(initialHeight = 45) {
-  const [height, setHeight] = useState(initialHeight);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const startResizing = useCallback((e) => {
-    // Prevent default to stop scrolling while dragging
-    if (e.cancelable) e.preventDefault();
-    setIsDragging(true);
-
-    const startY = "touches" in e ? e.touches[0].clientY : e.clientY;
-    const startHeight = height;
-    const containerHeight = window.innerHeight;
-
-    const handleMove = (moveEvent) => {
-      const currentY =
-        "touches" in moveEvent
-          ? moveEvent.touches[0].clientY
-          : moveEvent.clientY;
-      const deltaY = currentY - startY;
-      const deltaPercentage = (deltaY / containerHeight) * 100;
-
-      // Limit resizing between 20% and 80%
-      const newHeight = Math.min(
-        80,
-        Math.max(20, startHeight + deltaPercentage)
-      );
-      setHeight(newHeight);
-    };
-
-    const handleUp = () => {
-      setIsDragging(false);
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleUp);
-      document.removeEventListener("touchmove", handleMove);
-      document.removeEventListener("touchend", handleUp);
-    };
-
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleUp);
-    document.addEventListener("touchmove", handleMove, { passive: false });
-    document.addEventListener("touchend", handleUp);
-  }, [height]);
-
-  return { height, isDragging, startResizing };
-}
 
 // --- MAIN COMPONENT ---
 
