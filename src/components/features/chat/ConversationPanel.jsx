@@ -1,8 +1,10 @@
 import React, { useRef, useEffect } from "react";
 import { Send, User, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function ConversationPanel({
   messages,
@@ -12,73 +14,76 @@ export function ConversationPanel({
   hasStarted,
 }) {
   const scrollEndRef = useRef(null);
-  
-  // 1. Create a ref to access the actual DOM input element
   const inputRef = useRef(null);
 
-  // Scroll to bottom of chat messages (Existing logic)
+  // Optimization: Only auto-scroll if messages change
   useEffect(() => {
-    scrollEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    requestAnimationFrame(() => {
+      scrollEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    });
   }, [messages]);
 
-  // 2. NEW EFFECT: Auto-scroll the input box to the right when text changes
+  // Optimization: Auto-scroll input text to the right for long queries
   useEffect(() => {
     if (inputRef.current) {
-      // Set the horizontal scroll position to the total width of the content
       inputRef.current.scrollLeft = inputRef.current.scrollWidth;
     }
   }, [input]);
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (input.trim() && hasStarted) {
+        onSendMessage();
+      }
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full bg-card overflow-hidden">
-      {/* HEADER */}
-      <div className="h-16 px-6 border-b border-border bg-muted/20 shrink-0 flex items-center justify-between">
+    <div className="flex flex-col h-full w-full bg-card border-l border-border/40 overflow-hidden">
+      {/* 1. HEADER */}
+      <div className="flex h-14 shrink-0 items-center justify-between border-b bg-muted/20 px-6">
         <div className="flex items-center gap-3">
-          <h2 className="font-semibold text-sm text-foreground">Session Transcript</h2>
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h2 className="text-sm font-semibold tracking-tight">
+            Session Transcript
+          </h2>
         </div>
       </div>
 
-      {/* MESSAGES AREA */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 w-full custom-scrollbar relative">
-        <style>{`
-          .custom-scrollbar::-webkit-scrollbar { 
-            width: 6px; 
-          }
-          .custom-scrollbar::-webkit-scrollbar-track { 
-            background: transparent; 
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb { 
-            background-color: var(--border); 
-            border-radius: var(--radius); 
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover { 
-            background-color: var(--muted-foreground); 
-            opacity: 0.5;
-          }
-        `}</style>
-
-        {/* 1. EMPTY STATE MESSAGE */}
+      {/* 2. MESSAGES AREA (Scrollable) */}
+      <ScrollArea className="flex-1 p-4 h-full">
+        {/* Empty State */}
         {!hasStarted && messages.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
             <p className="text-muted-foreground text-sm">
-              Click on the <span className="font-semibold text-primary">Start Conversation</span> button to start...
+              Click on the{" "}
+              <span className="font-semibold text-primary">
+                Start Conversation
+              </span>{" "}
+              button to start...
             </p>
           </div>
         ) : (
-          // 2. MESSAGES LIST
-          <div className="flex flex-col gap-6">
-            {messages.map((msg) => (
+          /* Messages List */
+          <div className="flex flex-col gap-6 pb-2">
+            {messages.map((msg, index) => (
               <div
-                key={msg.id}
-                className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+                key={msg.id || index}
+                className={cn(
+                  "flex gap-3 w-full animate-in fade-in slide-in-from-bottom-2 duration-300",
+                  msg.role === "user" ? "flex-row-reverse" : "flex-row"
+                )}
               >
-                <Avatar className="h-8 w-8 shrink-0 mt-1 border border-border shadow-sm">
+                {/* User/Bot Icon */}
+                <Avatar className="h-8 w-8 shrink-0 border shadow-sm">
                   <AvatarFallback
-                    className={
+                    className={cn(
+                      "text-xs font-medium",
                       msg.role === "assistant"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground"
-                    }
+                    )}
                   >
                     {msg.role === "user" ? (
                       <User className="h-4 w-4" />
@@ -88,51 +93,65 @@ export function ConversationPanel({
                   </AvatarFallback>
                 </Avatar>
 
+                {/* Message Bubble */}
                 <div
-                  className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"} max-w-[85%]`}
+                  className={cn(
+                    "flex flex-col max-w-[85%]",
+                    msg.role === "user" ? "items-end" : "items-start"
+                  )}
                 >
                   <div
-                    className={`px-5 py-3 text-sm shadow-sm leading-relaxed ${
+                    className={cn(
+                      "px-4 py-2.5 text-sm shadow-sm break-words whitespace-pre-wrap",
                       msg.role === "user"
-                        ? "bg-primary text-primary-foreground rounded-xl rounded-tr-sm"
-                        : "bg-muted/50 border border-border text-foreground rounded-xl rounded-tl-sm"
-                    }`}
+                        ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
+                        : "bg-muted/50 border text-foreground rounded-2xl rounded-tl-sm"
+                    )}
                   >
                     {msg.content}
                   </div>
                 </div>
               </div>
             ))}
+            {/* Invisible div to anchor scroll to bottom */}
             <div ref={scrollEndRef} />
           </div>
         )}
-      </div>
+      </ScrollArea>
 
-      {/* FOOTER */}
-      <div className="h-20 p-4 border-t border-border bg-card shrink-0">
+      {/* 3. INPUT FOOTER - UPDATED */}
+      <div className="p-4 bg-background border-t shrink-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             onSendMessage();
           }}
-          className="flex gap-2 items-center"
+          className="relative flex items-center"
         >
           <Input
-            // 3. Attach the ref here
             ref={inputRef}
-            placeholder="Type a message..."
+            placeholder={
+              hasStarted ? "Type a message..." : "Start session first..."
+            }
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
             disabled={!hasStarted}
-            className="flex-1 bg-muted/30 border-transparent focus:border-primary/20 shadow-none focus-visible:ring-0 h-12 px-6 rounded-xl transition-all text-foreground placeholder:text-muted-foreground"
+            // Added pr-14 to prevent text from typing under the button
+            className="bg-muted/30 border-transparent focus:border-primary/20 shadow-none focus-visible:ring-0 h-12 pl-6 pr-14 rounded-xl transition-all text-foreground placeholder:text-muted-foreground"
           />
           <Button
             type="submit"
             size="icon"
             disabled={!input.trim() || !hasStarted}
-            className="h-12 w-12 rounded-xl shrink-0 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+            className={cn(
+              // Changed positioning to strictly center vertically
+              "absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-lg transition-all duration-200",
+              input.trim() ? "opacity-100 scale-100" : "opacity-0 scale-90"
+            )}
           >
             <Send className="h-5 w-5" />
+            <span className="sr-only">Send</span>
           </Button>
         </form>
       </div>
