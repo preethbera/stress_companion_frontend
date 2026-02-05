@@ -3,13 +3,6 @@ import { X, Video, Thermometer, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/**
- * CAMERA STACK COMPONENT
- * * Logic:
- * - Uses Flexbox (flex-col) to stack items vertically.
- * - 'flex-1' ensures items expand to fill available space.
- * - If one camera closes, the other automatically grows to 100% height.
- */
 const CameraStack = ({ 
   isNormalOpen, 
   isThermalOpen, 

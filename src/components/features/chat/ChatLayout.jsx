@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -12,6 +12,12 @@ export default function ChatLayout({
   voiceSlot,
   transcriptSlot,
 }) {
+
+  const cameraPanelRef = useRef(null);
+  const voicePanelRef = useRef(null);
+  const transcriptPanelRef = useRef(null);
+
+
   return (
     <div className="h-full w-full bg-background">
       <ResizablePanelGroup
@@ -21,7 +27,7 @@ export default function ChatLayout({
         {/* 1. LEFT PANEL: CAMERA */}
         {showCameraPanel && (
           <>
-            <ResizablePanel defaultSize={25}  minSize={200} maxSize={450}>
+            <ResizablePanel defaultSize={25}  minSize={200} maxSize={550} ref={cameraPanelRef}>
               <div className="h-full w-full overflow-hidden">{cameraSlot}</div>
             </ResizablePanel>
             <ResizableHandle withHandle />
@@ -29,7 +35,7 @@ export default function ChatLayout({
         )}
 
         {/* 2. MIDDLE PANEL: VOICE (The Flexible One) */}
-        <ResizablePanel defaultSize={showTranscriptPanel ? (showCameraPanel ? 40 : 65) : (showCameraPanel ? 75 : 100)} minSize={300}>
+        <ResizablePanel defaultSize={showTranscriptPanel ? (showCameraPanel ? 40 : 65) : (showCameraPanel ? 75 : 100)} minSize={500} ref={voicePanelRef}>
           <div className="h-full w-full overflow-hidden relative">
             {voiceSlot}
           </div>
@@ -39,7 +45,7 @@ export default function ChatLayout({
         {showTranscriptPanel && (
           <>
             <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={35} minSize={200} maxSize={750}>
+            <ResizablePanel defaultSize={35} minSize={300} maxSize={750} ref={transcriptPanelRef}>
               <div className="h-full w-full overflow-hidden border-l border-border/50">
                 {transcriptSlot}
               </div>

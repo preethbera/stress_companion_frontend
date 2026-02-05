@@ -8,6 +8,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import VoicePanel from "@/components/features/chat/VoicePanel";
 import { ConversationPanel } from "@/components/features/chat/ConversationPanel";
 import { CameraStack } from "@/components/features/chat/CameraStack";
+import { CameraFeed } from "@/components/features/chat/CameraFeed";
 
 // Hooks
 import { useChatSession } from "@/hooks/useChatSession";
@@ -16,7 +17,7 @@ export default function ChatPage({ user, onLogout }) {
   // --- 1. LOCAL UI STATE (Visual Toggles) ---
   const [isNormalCamOpen, setIsNormalCamOpen] = useState(false);
   const [isThermalCamOpen, setIsThermalCamOpen] = useState(false);
-  
+
   // NEW: State for the transcript/chat panel visibility
   const [showTranscript, setShowTranscript] = useState(true);
 
@@ -25,8 +26,8 @@ export default function ChatPage({ user, onLogout }) {
     messages,
     input,
     setInput,
-    aiState,      
-    hasStarted,   
+    aiState,
+    hasStarted,
     isMicOn,
     isSpeaking,
     isGeminiLoading,
@@ -37,7 +38,7 @@ export default function ChatPage({ user, onLogout }) {
   } = useChatSession();
 
   // --- 3. HELPER HANDLERS ---
-  
+
   // Logic: If any camera is hidden, show both. If both are visible, hide both.
   const toggleCamera = () => {
     if (isNormalCamOpen || isThermalCamOpen) {
@@ -54,6 +55,9 @@ export default function ChatPage({ user, onLogout }) {
     setShowTranscript((prev) => !prev);
   };
 
+  const handleFrameProcess = useCallback((base64Image) => {
+    // Do nothing (Mirror effect still works!)
+  }, []);
   // --- 4. PREPARE THE SLOTS ---
 
   // A. Camera Slot
@@ -63,6 +67,13 @@ export default function ChatPage({ user, onLogout }) {
       isThermalOpen={isThermalCamOpen}
       onCloseNormal={() => setIsNormalCamOpen(false)}
       onCloseThermal={() => setIsThermalCamOpen(false)}
+      normalFeedSlot={
+        <CameraFeed
+          isActive={isNormalCamOpen}
+          onFrame={handleFrameProcess}
+          captureInterval={500} // Send 2 frames per second (adjust as needed)
+        />
+      }
     />
   );
 
@@ -71,24 +82,20 @@ export default function ChatPage({ user, onLogout }) {
     <VoicePanel
       hasStarted={hasStarted}
       aiState={aiState}
-      
       // State booleans
       isMicOn={isMicOn}
       isGeminiLoading={isGeminiLoading}
       isSpeaking={isSpeaking}
-      
       // UI States for buttons
-      isChatOpen={showTranscript}           // Controls the "Maximize/Chat" icon state
+      isChatOpen={showTranscript} // Controls the "Maximize/Chat" icon state
       isCameraActive={isNormalCamOpen || isThermalCamOpen} // Controls the Camera button active state
-      
       // Actions
       onStart={handleStartSession}
       onStop={handleStop}
       onToggleMic={toggleMic}
-      
       // NEW: Wired up handlers
-      onToggleChat={toggleTranscript}       // Wired to the top-right button
-      onToggleCamera={toggleCamera}         // Wired to the footer camera button
+      onToggleChat={toggleTranscript} // Wired to the top-right button
+      onToggleCamera={toggleCamera} // Wired to the footer camera button
     />
   );
 
@@ -112,7 +119,6 @@ export default function ChatPage({ user, onLogout }) {
           // Control panel visibility based on state
           showCameraPanel={isNormalCamOpen || isThermalCamOpen}
           showTranscriptPanel={showTranscript}
-          
           // Inject the slots
           cameraSlot={cameraSlot}
           voiceSlot={voiceSlot}
