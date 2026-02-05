@@ -1,64 +1,101 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+
+// --- HOOK IMPORTS ---
 import { useGemini } from "@/hooks/useGemini"; 
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
+import { useCamera } from "@/hooks/useCamera";
+import { useFaceDetection } from "@/hooks/useFaceDetection";
+import { useFaceTracker } from "@/hooks/useFaceTracker";
+import { useStressSocket } from "@/hooks/useStressSocket";
 
 export function useChatSession() {
-  // --- 1. CORE STATE ---
+  // 1. CORE STATE
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [hasStarted, setHasStarted] = useState(false);
-  const [aiState, setAiState] = useState("idle");
-  
+  const [aiState, setAiState] = useState("idle"); 
   const hasStartedRef = useRef(false);
 
-  // --- 2. SUB-HOOKS & CONFIGURATION ---
+  // 2. VISION & OPTICAL SYSTEM
+  const isVisionActive = hasStarted;
 
-  // A. Gemini (Brain)
+  // A. Networking
+  const { sendFrame, isConnected: isSocketConnected } = useStressSocket(isVisionActive);
+
+  // B. Hardware (Master Camera)
+  const { 
+    videoRef: masterVideoRef, 
+    stream: activeStream, // <--- DIRECT USE, no redundant useEffect
+    error: cameraError, 
+    isLoading: isCameraLoading 
+  } = useCamera({ isActive: isVisionActive });
+
+  // C. AI Model (Singleton Managed)
+  const { detectorRef, isModelLoaded, modelError } = useFaceDetection();
+
+  // D. Tracker (Logic + UI Refs)
+  // Only track if vision is active, model is ready, and camera isn't loading
+  const shouldTrack = isVisionActive && isModelLoaded && !isCameraLoading;
+
+  const { overlayRef, cropCanvasRef } = useFaceTracker(
+    masterVideoRef,      
+    detectorRef.current, 
+    shouldTrack,         
+    sendFrame           
+  );
+
+  // E. Vision State Bundle
+  const visionState = useMemo(() => ({
+    isActive: isVisionActive,
+    isLoading: isVisionActive && (!isModelLoaded || isCameraLoading),
+    isConnected: isSocketConnected,
+    error: cameraError || modelError,
+    
+    stream: activeStream,       
+    overlayRef,    
+    cropCanvasRef,
+    masterVideoRef 
+  }), [
+    isVisionActive, 
+    isModelLoaded, 
+    isCameraLoading, 
+    isSocketConnected, 
+    cameraError, 
+    modelError, 
+    activeStream, 
+    overlayRef, 
+    cropCanvasRef, 
+    masterVideoRef
+  ]);
+
+  // 3. AUDIO & INTELLIGENCE CONFIGURATION
   const { sendMessage, isLoading: isGeminiLoading } = useGemini();
 
-  // B. Speech Recognition (Ears)
-  const { 
-    isMicOn, 
-    startListening, 
-    stopListening, 
-    toggleMic 
-  } = useSpeechRecognition({
+  const { isMicOn, startListening, stopListening, toggleMic } = useSpeechRecognition({
     onResult: (transcript) => setInput(transcript),
-    onEnd: () => {
-      // Only set to idle if we aren't currently processing a request
-      // This prevents the "thinking" state from being overwritten by the mic turning off
-      setAiState((prev) => (prev === "thinking" ? "thinking" : "idle"));
-    },
+    onEnd: () => setAiState((prev) => (prev === "thinking" ? "thinking" : "idle")),
   });
 
-  // C. Text To Speech (Mouth)
-  // FIX: We use useMemo to ensure these callbacks are stable and don't re-trigger unnecessary effects
   const ttsOptions = useMemo(() => ({
-    onSpeakStart: () => {
-      setAiState("speaking");
-    },
+    onSpeakStart: () => setAiState("speaking"),
     onSpeakEnd: () => {
       setAiState("idle");
-      
-      // FIX: Add a small delay before restarting the mic.
-      // Browsers often fail to start recording IMMEDIATELY after TTS ends due to audio resource conflicts.
       setTimeout(() => {
-        if (hasStartedRef.current) {
-          startListening(); 
-        }
+        if (hasStartedRef.current) startListening(); 
       }, 200);
     },
-  }), [startListening]); // Depend on startListening being stable
+  }), [startListening]);
 
   const { speak, cancelSpeech } = useTextToSpeech(ttsOptions);
 
-  // --- 3. ACTION HANDLERS ---
-
+  // 4. ACTION HANDLERS
   const handleStop = useCallback(() => {
     cancelSpeech();   
     stopListening();  
     setAiState("idle");
+    setHasStarted(false);
+    hasStartedRef.current = false;
   }, [cancelSpeech, stopListening]);
 
   const handleStartSession = useCallback(() => {
@@ -66,13 +103,7 @@ export function useChatSession() {
     hasStartedRef.current = true;
     
     const initialMsg = "I'm listening. You can speak freely here. How are you feeling?";
-    
-    setMessages([{
-      id: Date.now().toString(),
-      role: "assistant",
-      content: initialMsg,
-    }]);
-
+    setMessages([{ id: Date.now().toString(), role: "assistant", content: initialMsg }]);
     speak(initialMsg);
   }, [speak]);
 
@@ -81,82 +112,38 @@ export function useChatSession() {
 
     if (!textToSend.trim()) return;
 
-    // 1. Add User Message
-    const userMsg = { 
-      id: Date.now().toString(), 
-      role: "user", 
-      content: textToSend 
-    };
+    const userMsg = { id: Date.now().toString(), role: "user", content: textToSend };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    
-    // 2. Set State
     setAiState("thinking");
     cancelSpeech(); 
     stopListening(); 
 
     try {
-      // 3. Get AI Response
       const aiText = await sendMessage(textToSend);
-      
-      const aiMsg = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: aiText,
-      };
-      
-      // 4. Update UI & Speak
-      setMessages((prev) => [...prev, aiMsg]);
+      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: aiText }]);
       speak(aiText);
-      
     } catch (error) {
       console.error("Failed to get response:", error);
       setAiState("idle");
     }
   }, [input, sendMessage, speak, cancelSpeech, stopListening]);
 
-  // --- 4. AUTOMATION EFFECTS ---
-
-  // Sync Visual State when Mic is toggled manually
+  // 5. AUTOMATION EFFECTS
   useEffect(() => {
-    if (isMicOn && aiState === "idle") {
-      setAiState("listening");
-    }
+    if (isMicOn && aiState === "idle") setAiState("listening");
   }, [isMicOn, aiState]);
 
-  // AUTO-SEND LOGIC
   useEffect(() => {
-    if (
-      !isMicOn &&           
-      input.trim() &&       
-      hasStarted &&         
-      aiState === "idle" && 
-      !isGeminiLoading      
-    ) {
+    if (!isMicOn && input.trim() && hasStarted && aiState === "idle" && !isGeminiLoading) {
       handleSendMessage();
     }
-  }, [
-    isMicOn, 
-    input, 
-    hasStarted, 
-    aiState, 
-    isGeminiLoading, 
-    handleSendMessage
-  ]);
+  }, [isMicOn, input, hasStarted, aiState, isGeminiLoading, handleSendMessage]);
 
-  // --- 5. EXPORT ---
   return {
-    messages,
-    input,
-    setInput,
-    aiState,
-    hasStarted,
-    isMicOn,
-    isSpeaking: aiState === "speaking", 
-    isGeminiLoading,
-    handleStartSession,
-    handleSendMessage,
-    toggleMic,
-    handleStop,
+    messages, input, setInput, aiState, hasStarted, isMicOn,
+    isSpeaking: aiState === "speaking", isGeminiLoading,
+    cameraProps: visionState, 
+    handleStartSession, handleSendMessage, toggleMic, handleStop,
   };
 }

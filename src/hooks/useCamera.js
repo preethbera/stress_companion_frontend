@@ -7,7 +7,8 @@ export function useCamera({ isActive = true } = {}) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Cleanup function to stop tracks
+    let isMounted = true;
+    
     const stopStream = () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
@@ -28,34 +29,37 @@ export function useCamera({ isActive = true } = {}) {
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: "user",
-            width: { ideal: 640 }, // Standard resolution is enough for face detection
+            width: { ideal: 640 },
             height: { ideal: 480 },
           },
           audio: false,
         });
 
+        if (!isMounted) {
+          mediaStream.getTracks().forEach(t => t.stop());
+          return;
+        }
+
         setStream(mediaStream);
         
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
-          // Wait for metadata to ensure video dimensions are ready
-          await new Promise((resolve) => {
-            videoRef.current.onloadedmetadata = () => {
-              resolve();
-            };
-          });
         }
       } catch (err) {
         console.error("Camera Error:", err);
-        setError("Could not access camera. Please check permissions.");
+        if (isMounted) setError("Could not access camera. Check permissions.");
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     startCamera();
 
-    return () => stopStream();
+    return () => {
+      isMounted = false;
+      stopStream();
+    };
+    // stream dependency removed to prevent loop, only re-run on isActive change
   }, [isActive]);
 
   return { videoRef, stream, error, isLoading };

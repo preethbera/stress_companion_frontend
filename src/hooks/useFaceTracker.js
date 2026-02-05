@@ -2,8 +2,8 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 // Configuration
-const CAPTURE_INTERVAL_MS = 150; // ~6-7 FPS (1000ms / 150ms)
-const TARGET_SIZE = 256;         // 256x256 Resolution
+const CAPTURE_INTERVAL_MS = 150; 
+const TARGET_SIZE = 256;         
 const FACE_PADDING_PERCENT = 0.2;
 const BOX_COLOR_OK = "#00ff2a";
 const BOX_COLOR_ERROR = "#ef4444";
@@ -14,7 +14,6 @@ export function useFaceTracker(videoRef, detector, isActive, onFrameBlob) {
   const requestRef = useRef(null);
   const latestDetectionRef = useRef(null);
   
-  // Alert Logic
   const lastAlertTimeRef = useRef(0);
   const isWarmupRef = useRef(true);
 
@@ -26,26 +25,35 @@ export function useFaceTracker(videoRef, detector, isActive, onFrameBlob) {
     }
   };
 
-  // --- 1. Visual Detection Loop (High FPS) ---
+  // --- 1. Visual Detection Loop ---
   useEffect(() => {
     if (!isActive || !videoRef.current || !detector) return;
-    let warmupTimer;
+    
+    // Reset warmup on activation
+    isWarmupRef.current = true;
+    const warmupTimer = setTimeout(() => isWarmupRef.current = false, 3000);
 
     const detect = () => {
       const video = videoRef.current;
       const overlay = overlayRef.current;
 
+      // Safety check: ensure video is playing and has data
       if (!video || !detector || !overlay || video.readyState < 2) {
         requestRef.current = requestAnimationFrame(detect);
         return;
       }
 
+      // Detect
       const result = detector.detectForVideo(video, performance.now());
       const detections = result.detections;
       
+      // Update Overlay dimensions only if changed (prevents flicker)
+      if (overlay.width !== video.videoWidth || overlay.height !== video.videoHeight) {
+         overlay.width = video.videoWidth;
+         overlay.height = video.videoHeight;
+      }
+
       const ctx = overlay.getContext("2d");
-      overlay.width = video.videoWidth;
-      overlay.height = video.videoHeight;
       ctx.clearRect(0, 0, overlay.width, overlay.height);
 
       if (detections.length > 1) {
@@ -59,12 +67,11 @@ export function useFaceTracker(videoRef, detector, isActive, onFrameBlob) {
         latestDetectionRef.current = detections[0];
         drawBox(ctx, detections[0].boundingBox, BOX_COLOR_OK);
       }
+      
       requestRef.current = requestAnimationFrame(detect);
     };
 
     requestRef.current = requestAnimationFrame(detect);
-    isWarmupRef.current = true;
-    warmupTimer = setTimeout(() => isWarmupRef.current = false, 3000);
 
     return () => {
       cancelAnimationFrame(requestRef.current);
@@ -72,45 +79,48 @@ export function useFaceTracker(videoRef, detector, isActive, onFrameBlob) {
     };
   }, [isActive, detector, videoRef]);
 
-  // --- 2. Data Export Loop (Throttled ~6 FPS) ---
+  // --- 2. Data Export Loop ---
   useEffect(() => {
     if (!isActive) return;
+
+    const processFrame = () => {
+      const detection = latestDetectionRef.current;
+      const video = videoRef.current;
+      // Note: We don't check !detector here because this loop depends only on the cached detection result
+      if (!detection || !video || !cropCanvasRef.current) return;
+
+      const { boundingBox } = detection;
+      const ctx = cropCanvasRef.current.getContext("2d");
+
+      // Set canvas size ONLY if needed (prevents heavy context reset)
+      if (cropCanvasRef.current.width !== TARGET_SIZE) {
+        cropCanvasRef.current.width = TARGET_SIZE;
+        cropCanvasRef.current.height = TARGET_SIZE;
+      }
+
+      // Calculate Crop
+      const paddingX = boundingBox.width * FACE_PADDING_PERCENT;
+      const paddingY = boundingBox.height * FACE_PADDING_PERCENT;
+      const x = Math.max(0, boundingBox.originX - paddingX);
+      const y = Math.max(0, boundingBox.originY - paddingY);
+      const w = Math.min(video.videoWidth - x, boundingBox.width + (paddingX * 2));
+      const h = Math.min(video.videoHeight - y, boundingBox.height + (paddingY * 2));
+
+      // Draw & Convert
+      ctx.drawImage(video, x, y, w, h, 0, 0, TARGET_SIZE, TARGET_SIZE);
+
+      if (onFrameBlob) {
+        cropCanvasRef.current.toBlob(
+          (blob) => { if (blob) onFrameBlob(blob); },
+          "image/jpeg",
+          0.8
+        );
+      }
+    };
+
     const interval = setInterval(processFrame, CAPTURE_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [isActive]);
-
-  const processFrame = () => {
-    const detection = latestDetectionRef.current;
-    const video = videoRef.current;
-    if (!detection || !video || !cropCanvasRef.current) return;
-
-    const { boundingBox } = detection;
-    const ctx = cropCanvasRef.current.getContext("2d");
-
-    // 1. Calculate Crop
-    const paddingX = boundingBox.width * FACE_PADDING_PERCENT;
-    const paddingY = boundingBox.height * FACE_PADDING_PERCENT;
-    const x = Math.max(0, boundingBox.originX - paddingX);
-    const y = Math.max(0, boundingBox.originY - paddingY);
-    const w = Math.min(video.videoWidth - x, boundingBox.width + (paddingX * 2));
-    const h = Math.min(video.videoHeight - y, boundingBox.height + (paddingY * 2));
-
-    // 2. RESIZE: Set canvas to target 256x256
-    cropCanvasRef.current.width = TARGET_SIZE;
-    cropCanvasRef.current.height = TARGET_SIZE;
-
-    // 3. Draw Scaled Image
-    ctx.drawImage(video, x, y, w, h, 0, 0, TARGET_SIZE, TARGET_SIZE);
-
-    // 4. Convert to Binary Blob (Efficient)
-    if (onFrameBlob) {
-      cropCanvasRef.current.toBlob(
-        (blob) => { if (blob) onFrameBlob(blob); },
-        "image/jpeg",
-        0.8 // 80% Quality
-      );
-    }
-  };
+  }, [isActive, videoRef, onFrameBlob]);
 
   const drawBox = (ctx, box, color) => {
     ctx.strokeStyle = color;

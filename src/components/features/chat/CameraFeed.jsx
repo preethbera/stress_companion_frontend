@@ -1,28 +1,40 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Loader2, AlertCircle, WifiOff, Wifi } from "lucide-react";
-import { useCamera } from "@/hooks/useCamera";
-import { useFaceDetection } from "@/hooks/useFaceDetection";
-import { useFaceTracker } from "@/hooks/useFaceTracker";
-import { useStressSocket } from "@/hooks/useStressSocket";
 
-export function CameraFeed({ isActive = true }) {
-  // 1. Networking
-  const { sendFrame, isConnected } = useStressSocket(isActive);
+export function CameraFeed({ 
+  // State Props
+  isActive = true,
+  isLoading = false,
+  isConnected = false,
+  error = null,
+  
+  // Ref Props
+  stream, 
+  overlayRef, // <--- If this is undefined, the app will crash without the fix below
+}) {
+  const localVideoRef = useRef(null);
 
-  // 2. Hardware & AI
-  const { videoRef, error: cameraError, isLoading: isCameraLoading } = useCamera({ isActive });
-  const { detectorRef, isModelLoaded, modelError } = useFaceDetection();
+  // 1. Attach Stream to the visible video element
+  useEffect(() => {
+    if (localVideoRef.current && stream) {
+      localVideoRef.current.srcObject = stream;
+    }
+  }, [stream]);
 
-  // 3. Logic (Tracker -> sends blob to socket)
-  const { overlayRef, cropCanvasRef } = useFaceTracker(
-    videoRef, 
-    detectorRef.current,
-    isActive && isModelLoaded && !isCameraLoading,
-    sendFrame // <--- Direct connection
-  );
+  // 2. Sync Canvas Dimensions (CRITICAL FOR GREEN BOX)
+  const handleVideoLoad = () => {
+    // SAFETY CHECK: Ensure refs exist before accessing .current
+    if (!localVideoRef.current || !overlayRef) return;
 
-  const isLoading = isActive && (!isModelLoaded || isCameraLoading);
-  const error = cameraError || modelError;
+    const video = localVideoRef.current;
+    const canvas = overlayRef.current;
+    
+    if (video && canvas) {
+      // Set the canvas internal resolution to match the video stream
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+    }
+  };
 
   if (!isActive) return null;
 
@@ -45,7 +57,6 @@ export function CameraFeed({ isActive = true }) {
         </div>
       )}
 
-      {/* Connection Status Indicators */}
       {!isLoading && (
         <div className="absolute top-2 right-2 z-30 px-2 py-1 rounded text-[10px] flex items-center gap-1 font-medium bg-black/50 backdrop-blur-sm">
            {isConnected ? (
@@ -57,11 +68,21 @@ export function CameraFeed({ isActive = true }) {
       )}
 
       <div className="relative w-full h-full transform scale-x-[-1]">
-        <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-contain" />
-        <canvas ref={overlayRef} className="absolute inset-0 w-full h-full object-contain pointer-events-none" />
+        <video 
+          ref={localVideoRef} 
+          autoPlay 
+          playsInline 
+          muted 
+          onLoadedMetadata={handleVideoLoad} 
+          className="absolute inset-0 w-full h-full object-contain" 
+        />
+        
+        {/* Pass ref only if it exists */}
+        <canvas 
+          ref={overlayRef} 
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none" 
+        />
       </div>
-
-      <canvas ref={cropCanvasRef} className="hidden" />
     </div>
   );
 }

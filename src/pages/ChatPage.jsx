@@ -14,24 +14,54 @@ import { CameraFeed } from "@/components/features/chat/CameraFeed";
 // Hooks
 import { useChatSession } from "@/hooks/useChatSession";
 
+/**
+ * HIDDEN LOGIC UNIT
+ * Optimization: Removed hardcoded resolution. The video element will now
+ * naturally adopt the stream's dimensions (e.g., 640x480) ensuring 1:1 pixel mapping
+ * for the AI model without distortion.
+ */
+function HiddenCameraUnit({ videoRef, cropCanvasRef }) {
+  return (
+    <div className="fixed top-0 left-0 invisible pointer-events-none">
+      <video 
+        ref={videoRef} 
+        autoPlay 
+        playsInline 
+        muted 
+        // No width/height attributes here -> uses native stream size
+      />
+      {/* The canvas used for smart-cropping the face */}
+      <canvas ref={cropCanvasRef} />
+    </div>
+  );
+}
+
 export default function ChatPage({ user, onLogout }) {
-  // --- 1. LOCAL UI STATE (Visual Toggles) ---
+  // --- 1. LOCAL UI STATE ---
   const [isNormalCamOpen, setIsNormalCamOpen] = useState(false);
   const [isThermalCamOpen, setIsThermalCamOpen] = useState(false);
-
-  // NEW: State for the transcript/chat panel visibility
   const [showTranscript, setShowTranscript] = useState(true);
 
-  // --- 2. CORE LOGIC (The "Central Brain") ---
+  // --- 2. CORE LOGIC (Central Brain) ---
   const {
+    // Chat Data
     messages,
     input,
     setInput,
+    
+    // Session State
     aiState,
     hasStarted,
+    
+    // Audio State
     isMicOn,
     isSpeaking,
     isGeminiLoading,
+    
+    // Vision State
+    cameraProps, 
+    
+    // Actions
     handleStartSession,
     handleSendMessage,
     toggleMic,
@@ -39,29 +69,20 @@ export default function ChatPage({ user, onLogout }) {
   } = useChatSession();
 
   // --- 3. HELPER HANDLERS ---
-
-  // Logic: If any camera is hidden, show both. If both are visible, hide both.
   const toggleCamera = () => {
-    if (isNormalCamOpen || isThermalCamOpen) {
-      setIsNormalCamOpen(false);
-      setIsThermalCamOpen(false);
-    } else {
-      setIsNormalCamOpen(true);
-      setIsThermalCamOpen(true);
-    }
+    // Toggle both for simplicity, or manage individually based on preference
+    const newState = !(isNormalCamOpen || isThermalCamOpen);
+    setIsNormalCamOpen(newState);
+    setIsThermalCamOpen(newState);
   };
 
-  // Logic: Simple toggle for the side chat panel
   const toggleTranscript = () => {
     setShowTranscript((prev) => !prev);
   };
 
-  const handleFrameProcess = useCallback((base64Image) => {
-    // Do nothing (Mirror effect still works!)
-  }, []);
   // --- 4. PREPARE THE SLOTS ---
 
-  // A. Camera Slot
+  // A. Camera Slot (The Visible UI)
   const cameraSlot = (
     <CameraStack
       isNormalOpen={isNormalCamOpen}
@@ -70,37 +91,41 @@ export default function ChatPage({ user, onLogout }) {
       onCloseThermal={() => setIsThermalCamOpen(false)}
       normalFeedSlot={
         <CameraFeed
-          isActive={isNormalCamOpen}
-          onFrame={handleFrameProcess}
-          captureInterval={500} // Send 2 frames per second (adjust as needed)
+          // Visuals: The Shared Stream
+          stream={cameraProps.stream} 
+          
+          // UI Overlay: The Green Box canvas ref (only draws when this component is mounted)
+          overlayRef={cameraProps.overlayRef} 
+          
+          // Status
+          isActive={cameraProps.isActive}
+          isLoading={cameraProps.isLoading}
+          isConnected={cameraProps.isConnected}
+          error={cameraProps.error}
         />
       }
     />
   );
 
-  // B. Voice Slot (The "Face" of the AI)
+  // B. Voice Slot
   const voiceSlot = (
     <VoicePanel
       hasStarted={hasStarted}
       aiState={aiState}
-      // State booleans
       isMicOn={isMicOn}
       isGeminiLoading={isGeminiLoading}
       isSpeaking={isSpeaking}
-      // UI States for buttons
-      isChatOpen={showTranscript} // Controls the "Maximize/Chat" icon state
-      isCameraActive={isNormalCamOpen || isThermalCamOpen} // Controls the Camera button active state
-      // Actions
+      isChatOpen={showTranscript} 
+      isCameraActive={isNormalCamOpen || isThermalCamOpen} 
       onStart={handleStartSession}
       onStop={handleStop}
       onToggleMic={toggleMic}
-      // NEW: Wired up handlers
-      onToggleChat={toggleTranscript} // Wired to the top-right button
-      onToggleCamera={toggleCamera} // Wired to the footer camera button
+      onToggleChat={toggleTranscript} 
+      onToggleCamera={toggleCamera} 
     />
   );
 
-  // C. Transcript Slot (The "Memory" of the AI)
+  // C. Transcript Slot
   const transcriptSlot = (
     <ConversationPanel
       messages={messages}
@@ -113,15 +138,22 @@ export default function ChatPage({ user, onLogout }) {
 
   return (
     <>
+      {/* 1. HIDDEN LOGIC LAYER (Active when session starts) */}
+      {hasStarted && (
+        <HiddenCameraUnit 
+          videoRef={cameraProps.masterVideoRef} 
+          cropCanvasRef={cameraProps.cropCanvasRef} 
+        />
+      )}
+
+      {/* 2. VISIBLE UI LAYER */}
       <div className="flex flex-col h-screen w-full bg-background">
         <Navbar user={user} onLogout={onLogout} />
 
         <main className="flex-1 overflow-hidden border-t w-full">
           <ChatLayout
-            // Control panel visibility based on state
             showCameraPanel={isNormalCamOpen || isThermalCamOpen}
             showTranscriptPanel={showTranscript}
-            // Inject the slots
             cameraSlot={cameraSlot}
             voiceSlot={voiceSlot}
             transcriptSlot={transcriptSlot}
