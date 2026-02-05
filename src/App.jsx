@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Dashboard from "./pages/Dashboard";
 import { Layout } from "@/components/layout/Layout";
 import ChatPage from "@/pages/ChatPage";
+import SessionReportPage from "./pages/SessionReportPage";
 
 const History = () => (
   <div className="py-8 text-2xl font-bold">Your Activity History</div>
@@ -91,6 +92,18 @@ export default function App() {
             element={
               user ? (
                 <ChatPage user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+          path="/report"
+            element={
+              user ? (
+                <Layout user={user} onLogout={handleLogout}>
+                  <SessionReportPage />
+                </Layout>
               ) : (
                 <Navigate to="/login" />
               )
