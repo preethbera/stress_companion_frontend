@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import ChatLayout from "@/components/features/chat/ChatLayout";
 import { Navbar } from "@/components/layout/Navbar";
+import { Toaster } from "@/components/ui/sonner";
 
 // Components
 import VoicePanel from "@/components/features/chat/VoicePanel";
@@ -111,20 +112,23 @@ export default function ChatPage({ user, onLogout }) {
   );
 
   return (
-    <div className="flex flex-col h-screen w-full bg-background">
-      <Navbar user={user} onLogout={onLogout} />
+    <>
+      <div className="flex flex-col h-screen w-full bg-background">
+        <Navbar user={user} onLogout={onLogout} />
 
-      <main className="flex-1 overflow-hidden border-t w-full">
-        <ChatLayout
-          // Control panel visibility based on state
-          showCameraPanel={isNormalCamOpen || isThermalCamOpen}
-          showTranscriptPanel={showTranscript}
-          // Inject the slots
-          cameraSlot={cameraSlot}
-          voiceSlot={voiceSlot}
-          transcriptSlot={transcriptSlot}
-        />
-      </main>
-    </div>
+        <main className="flex-1 overflow-hidden border-t w-full">
+          <ChatLayout
+            // Control panel visibility based on state
+            showCameraPanel={isNormalCamOpen || isThermalCamOpen}
+            showTranscriptPanel={showTranscript}
+            // Inject the slots
+            cameraSlot={cameraSlot}
+            voiceSlot={voiceSlot}
+            transcriptSlot={transcriptSlot}
+          />
+        </main>
+      </div>
+      <Toaster />
+    </>
   );
 }

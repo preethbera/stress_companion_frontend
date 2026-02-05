@@ -198,7 +198,7 @@ const VoicePanel = ({
             type="button"
             className="py-6 !px-8 text-xl font-bold rounded-xl shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 scale-105 transition-transform"
           >
-            <Play className="h-6 w-6" /> 
+            <Play className="h-6 w-6" strokeWidth={4} absoluteStrokeWidth /> 
             Start Conversation
           </Button>
         ) : (

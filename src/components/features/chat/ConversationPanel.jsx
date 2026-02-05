@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { Send, User, Sparkles } from "lucide-react";
+import { Send, User, Sparkles, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ export function ConversationPanel({
       {/* 1. HEADER */}
       <div className="flex h-14 shrink-0 items-center justify-between border-b bg-muted/20 px-6">
         <div className="flex items-center gap-3">
-          <Sparkles className="h-4 w-4 text-primary" />
+          <ScrollText className="h-4 w-4 text-primary" />
           <h2 className="text-sm font-semibold tracking-tight">
             Session Transcript
           </h2>
