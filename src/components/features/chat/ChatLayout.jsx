@@ -22,7 +22,7 @@ export default function ChatLayout({
     <div className="h-full w-full bg-background">
       <ResizablePanelGroup
         direction="horizontal"
-        className="h-full w-full rounded-lg border-t"
+        className="h-full w-full border-t"
       >
         {/* 1. LEFT PANEL: CAMERA */}
         {showCameraPanel && (

@@ -52,7 +52,7 @@ export function ConversationPanel({
       </div>
 
       {/* 2. MESSAGES AREA (Scrollable) */}
-      <ScrollArea className="flex-1 p-4 h-full">
+      <ScrollArea className="flex-1 h-full min-h-0">
         {/* Empty State */}
         {!hasStarted && messages.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
@@ -66,7 +66,7 @@ export function ConversationPanel({
           </div>
         ) : (
           /* Messages List */
-          <div className="flex flex-col gap-6 pb-2">
+          <div className="flex flex-col gap-6 py-4 px-4">
             {messages.map((msg, index) => (
               <div
                 key={msg.id || index}
@@ -138,7 +138,7 @@ export function ConversationPanel({
             onKeyDown={handleKeyDown}
             disabled={!hasStarted}
             // Added pr-14 to prevent text from typing under the button
-            className="bg-muted/30 border-transparent focus:border-primary/20 shadow-none focus-visible:ring-0 h-12 pl-6 pr-14 rounded-xl transition-all text-foreground placeholder:text-muted-foreground"
+            className="bg-muted/30 border-transparent focus:border-primary/20 shadow-none focus-visible:ring-0 h-12 pl-4 pr-14 rounded-xl transition-all text-foreground placeholder:text-muted-foreground"
           />
           <Button
             type="submit"
@@ -146,11 +146,11 @@ export function ConversationPanel({
             disabled={!input.trim() || !hasStarted}
             className={cn(
               // Changed positioning to strictly center vertically
-              "absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-lg transition-all duration-200",
+              "absolute right-1 top-1/2 -translate-y-1/2  size-10 rounded-lg transition-all duration-200",
               input.trim() ? "opacity-100 scale-100" : "opacity-0 scale-90"
             )}
           >
-            <Send className="h-5 w-5" />
+            <Send className="size-4" />
             <span className="sr-only">Send</span>
           </Button>
         </form>
