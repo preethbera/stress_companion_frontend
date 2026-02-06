@@ -22,7 +22,7 @@ export default function ChatLayout({
     <div className="h-full w-full bg-background">
       <ResizablePanelGroup
         direction="horizontal"
-        className="h-full w-full border-t"
+        className="h-full w-full"
       >
         {/* 1. LEFT PANEL: CAMERA */}
         {showCameraPanel && (
@@ -46,7 +46,7 @@ export default function ChatLayout({
           <>
             <ResizableHandle withHandle />
             <ResizablePanel defaultSize={35} minSize={300} maxSize={750} ref={transcriptPanelRef}>
-              <div className="h-full w-full overflow-hidden border-l border-border/50">
+              <div className="h-full w-full overflow-hidden">
                 {transcriptSlot}
               </div>
             </ResizablePanel>

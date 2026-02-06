@@ -40,7 +40,7 @@ export function ConversationPanel({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-card border-l border-border/40 overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-card overflow-hidden">
       {/* 1. HEADER */}
       <div className="flex h-14 shrink-0 items-center justify-between border-b bg-muted/20 px-6">
         <div className="flex items-center gap-3">

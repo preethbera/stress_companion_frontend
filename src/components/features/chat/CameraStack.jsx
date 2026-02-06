@@ -17,7 +17,7 @@ const CameraStack = ({
   if (!isNormalOpen && !isThermalOpen) return null;
 
   return (
-    <div className="flex flex-col h-full w-full bg-background border-r">
+    <div className="flex flex-col h-full w-full bg-background">
       
       {/* --- NORMAL CAMERA SECTION --- */}
       {isNormalOpen && (
