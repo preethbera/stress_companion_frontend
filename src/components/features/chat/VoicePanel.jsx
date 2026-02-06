@@ -220,13 +220,13 @@ const VoicePanel = ({
                 <span className="animate-pulse">Speaking...</span>
               ) : isMicOn ? (
                 <>
-                  <Mic className="mr-2 h-5 w-5 animate-pulse" />
+                  <Mic className="size-5 animate-pulse" />
                   <span className="hidden sm:inline">Stop Listening</span>
                   <span className="sm:hidden">Stop</span>
                 </>
               ) : (
                 <>
-                  <MicOff className="mr-2 h-5 w-5" />
+                  <MicOff className="size-5" />
                   <span className="hidden sm:inline">Tap to Speak</span>
                   <span className="sm:hidden">Speak</span>
                 </>
@@ -238,14 +238,14 @@ const VoicePanel = ({
               variant={isCameraActive ? "secondary" : "outline"}
               onClick={onToggleCamera}
               type="button"
-              className={`!py-6 !px-5 text-lg font-semibold rounded-xl border-2 transition-colors cursor-pointer ${
+              className={`!py-6 !px-5 font-semibold rounded-xl border-2 transition-colors cursor-pointer ${
                 isCameraActive 
                   ? "bg-secondary text-secondary-foreground border-transparent"
                   : "border-border hover:bg-muted"
               }`}
               title="Toggle Camera"
             >
-              <Camera className="h-8 w-8" />
+              <Camera className="size-6" />
             </Button>
 
             {/* 3. END SESSION BUTTON */}
@@ -253,9 +253,9 @@ const VoicePanel = ({
               variant="outline"
               onClick={onStop}
               type="button"
-              className="!py-6 !px-5 text-lg font-semibold rounded-xl border-2 border-border hover:border-destructive hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+              className="!py-6 !px-5 font-semibold rounded-xl border-2 border-border hover:border-destructive hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
             >
-              <PhoneOff className=" h-5 w-5"/>
+              <PhoneOff className="size-5"/>
             </Button>
           </>
         )}
