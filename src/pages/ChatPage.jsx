@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import VoicePanel from "@/components/features/chat/VoicePanel";
 import { ConversationPanel } from "@/components/features/chat/ConversationPanel";
 import { CameraStack } from "@/components/features/chat/CameraStack";
-import { CameraFeed } from "@/components/features/chat/CameraFeed";
+import { OpticalFeed } from "@/components/features/chat/OpticalFeed";
 
 // Hooks
 import { useChatSession } from "@/hooks/useChatSession";
@@ -89,8 +89,8 @@ export default function ChatPage({ user, onLogout }) {
       isThermalOpen={isThermalCamOpen}
       onCloseNormal={() => setIsNormalCamOpen(false)}
       onCloseThermal={() => setIsThermalCamOpen(false)}
-      normalFeedSlot={
-        <CameraFeed
+      opticalFeedSlot={
+        <OpticalFeed
           // Visuals: The Shared Stream
           stream={cameraProps.stream} 
           

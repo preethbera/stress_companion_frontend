@@ -9,7 +9,7 @@ const CameraStack = ({
   onCloseNormal, 
   onCloseThermal,
   // Slot props allow us to inject the real camera feeds later
-  normalFeedSlot, 
+  opticalFeedSlot, 
   thermalFeedSlot 
 }) => {
 
@@ -49,7 +49,7 @@ const CameraStack = ({
              {/* The 'slot' pattern allows us to pass the real <video> logic 
                from the parent, keeping this layout component dumb and clean.
              */}
-             {normalFeedSlot ? normalFeedSlot : (
+             {opticalFeedSlot ? opticalFeedSlot : (
                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
                   <span className="text-xs">No Signal</span>
                </div>

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { Loader2, AlertCircle, WifiOff, Wifi } from "lucide-react";
 
-export function CameraFeed({ 
+export function OpticalFeed({ 
   // State Props
   isActive = true,
   isLoading = false,
