@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { Loader2, AlertCircle, WifiOff, Wifi } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 
 export function OpticalFeed({ 
   // State Props

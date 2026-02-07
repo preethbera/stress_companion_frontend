@@ -10,28 +10,40 @@ import VoicePanel from "@/components/features/chat/VoicePanel";
 import { ConversationPanel } from "@/components/features/chat/ConversationPanel";
 import { CameraStack } from "@/components/features/chat/CameraStack";
 import { OpticalFeed } from "@/components/features/chat/OpticalFeed";
+import { ThermalFeed } from "@/components/features/chat/ThermalFeed";
 
 // Hooks
 import { useChatSession } from "@/hooks/useChatSession";
 
 /**
  * HIDDEN LOGIC UNIT
- * Optimization: Removed hardcoded resolution. The video element will now
- * naturally adopt the stream's dimensions (e.g., 640x480) ensuring 1:1 pixel mapping
- * for the AI model without distortion.
+ * Purpose: Keeps the "Master" DOM elements alive for the AI Trackers.
  */
-function HiddenCameraUnit({ videoRef, cropCanvasRef }) {
+function HiddenCameraUnit({ 
+  opticalRef, opticalCanvasRef, 
+  thermalRef, thermalCanvasRef, thermalStream 
+}) {
   return (
-    <div className="fixed top-0 left-0 invisible pointer-events-none">
+    <div className="fixed top-0 left-0 invisible pointer-events-none overflow-hidden w-px h-px">
+      {/* --- MASTER OPTICAL ELEMENT --- */}
       <video 
-        ref={videoRef} 
+        ref={opticalRef} 
         autoPlay 
         playsInline 
         muted 
-        // No width/height attributes here -> uses native stream size
       />
-      {/* The canvas used for smart-cropping the face */}
-      <canvas ref={cropCanvasRef} />
+      <canvas ref={opticalCanvasRef} />
+
+      {/* --- MASTER THERMAL ELEMENT --- */}
+      {thermalStream && (
+        <img 
+          ref={thermalRef} 
+          src={thermalStream} 
+          crossOrigin="anonymous"
+          alt="hidden-thermal-master"
+        />
+      )}
+      <canvas ref={thermalCanvasRef} />
     </div>
   );
 }
@@ -58,8 +70,9 @@ export default function ChatPage({ user, onLogout }) {
     isSpeaking,
     isGeminiLoading,
     
-    // Vision State
-    cameraProps, 
+    // Vision State bundles
+    cameraProps,   // Optical Data
+    thermalProps,  // Thermal Data
     
     // Actions
     handleStartSession,
@@ -70,10 +83,17 @@ export default function ChatPage({ user, onLogout }) {
 
   // --- 3. HELPER HANDLERS ---
   const toggleCamera = () => {
-    // Toggle both for simplicity, or manage individually based on preference
-    const newState = !(isOpticalCamOpen || isThermalCamOpen);
-    setIsOpticalCamOpen(newState);
-    setIsThermalCamOpen(newState);
+    // If ANY camera is open, we close ALL.
+    // If ALL are closed, we open BOTH.
+    const isAnyOpen = isOpticalCamOpen || isThermalCamOpen;
+    
+    if (isAnyOpen) {
+      setIsOpticalCamOpen(false);
+      setIsThermalCamOpen(false);
+    } else {
+      setIsOpticalCamOpen(true);
+      setIsThermalCamOpen(true);
+    }
   };
 
   const toggleTranscript = () => {
@@ -85,31 +105,48 @@ export default function ChatPage({ user, onLogout }) {
   // A. Camera Slot (The Visible UI)
   const cameraSlot = (
     <CameraStack
+      // Visibility Toggles
       isOpticalOpen={isOpticalCamOpen}
       isThermalOpen={isThermalCamOpen}
       onCloseOptical={() => setIsOpticalCamOpen(false)}
       onCloseThermal={() => setIsThermalCamOpen(false)}
+      
+      // Optical Status
       isOpticalFeedLoading={cameraProps.isLoading}
       isOpticalFeedConnected={cameraProps.isConnected}
+
+      // Thermal Status (Added as requested)
+      isThermalFeedLoading={thermalProps.isLoading}
+      isThermalFeedConnected={thermalProps.isConnected}
+      
+      // Slot 1: Optical Feed
       opticalFeedSlot={
         <OpticalFeed
-          // Visuals: The Shared Stream
           stream={cameraProps.stream} 
-          
-          // UI Overlay: The Green Box canvas ref (only draws when this component is mounted)
           overlayRef={cameraProps.overlayRef} 
-          
-          // Status
           isActive={cameraProps.isActive}
           isLoading={cameraProps.isLoading}
           isConnected={cameraProps.isConnected}
           error={cameraProps.error}
         />
       }
+
+      // Slot 2: Thermal Feed
+      thermalFeedSlot={
+        <ThermalFeed
+          stream={thermalProps.stream} 
+          overlayRef={thermalProps.overlayRef}
+          isActive={thermalProps.isActive}
+          isLoading={thermalProps.isLoading}
+          error={thermalProps.error}
+        />
+      }
     />
   );
 
   // B. Voice Slot
+  // Note: We ensure isCameraActive is true if EITHER camera is open.
+  // This ensures the session timer continues counting even if one camera is closed.
   const voiceSlot = (
     <VoicePanel
       hasStarted={hasStarted}
@@ -143,8 +180,14 @@ export default function ChatPage({ user, onLogout }) {
       {/* 1. HIDDEN LOGIC LAYER (Active when session starts) */}
       {hasStarted && (
         <HiddenCameraUnit 
-          videoRef={cameraProps.masterVideoRef} 
-          cropCanvasRef={cameraProps.cropCanvasRef} 
+          // Optical
+          opticalRef={cameraProps.masterVideoRef} 
+          opticalCanvasRef={cameraProps.cropCanvasRef} 
+          
+          // Thermal
+          thermalRef={thermalProps.masterVideoRef}
+          thermalCanvasRef={thermalProps.cropCanvasRef}
+          thermalStream={thermalProps.stream}
         />
       )}
 
