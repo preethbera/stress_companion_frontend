@@ -5,7 +5,6 @@ export function OpticalFeed({
   // State Props
   isActive = true,
   isLoading = false,
-  isConnected = false,
   error = null,
   
   // Ref Props
@@ -54,16 +53,6 @@ export function OpticalFeed({
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white">
           <Loader2 className="h-8 w-8 animate-spin mb-2" />
           <p className="text-xs text-muted-foreground">Initializing System...</p>
-        </div>
-      )}
-
-      {!isLoading && (
-        <div className="absolute top-2 right-2 z-30 px-2 py-1 rounded text-[10px] flex items-center gap-1 font-medium bg-black/50 backdrop-blur-sm">
-           {isConnected ? (
-             <span className="text-green-400 flex items-center gap-1"><Wifi className="h-3 w-3" /> Live</span>
-           ) : (
-             <span className="text-red-400 flex items-center gap-1"><WifiOff className="h-3 w-3" /> Offline</span>
-           )}
         </div>
       )}
 

@@ -89,6 +89,8 @@ export default function ChatPage({ user, onLogout }) {
       isThermalOpen={isThermalCamOpen}
       onCloseOptical={() => setIsOpticalCamOpen(false)}
       onCloseThermal={() => setIsThermalCamOpen(false)}
+      isOpticalFeedLoading={cameraProps.isLoading}
+      isOpticalFeedConnected={cameraProps.isConnected}
       opticalFeedSlot={
         <OpticalFeed
           // Visuals: The Shared Stream
