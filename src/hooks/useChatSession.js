@@ -8,7 +8,7 @@ import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useOpticalCamera } from "@/hooks/useOpticalCamera";
 import { useFaceDetection } from "@/hooks/useFaceDetection";
 import { useFaceTracker } from "@/hooks/useFaceTracker";
-import { useStressSocket } from "@/hooks/useStressSocket";
+import { useOpticalStressSocket } from "@/hooks/useOpticalStressSocket";
 
 export function useChatSession() {
   const navigate = useNavigate(); // <--- 2. Initialize Navigation
@@ -34,7 +34,7 @@ export function useChatSession() {
   const isVisionActive = hasStarted;
 
   // <--- 4. DATA HANDLER: Capture Incoming Scores --->
-  // We assume useStressSocket accepts a callback for new messages
+  // We assume useOpticalStressSocket accepts a callback for new messages
   const handleSocketMessage = useCallback((data) => {
     if (data?.stress_score !== undefined) {
       setStressTimeline((prev) => [
@@ -45,7 +45,7 @@ export function useChatSession() {
   }, []);
 
   // Pass the handler to the socket hook
-  const { sendFrame, isConnected: isSocketConnected } = useStressSocket(
+  const { sendFrame, isConnected: isSocketConnected } = useOpticalStressSocket(
     isVisionActive, 
     handleSocketMessage 
   );

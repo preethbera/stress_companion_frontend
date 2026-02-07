@@ -1,0 +1,95 @@
+import { useEffect, useRef, useState, useCallback } from "react";
+import { toast } from "sonner";
+
+// UPDATED: Pointing to the Thermal WebSocket endpoint
+const WS_URL = "ws://localhost:8000/api/v1/ws/thermal";
+
+/**
+ * @param {boolean} isActive - Whether the socket should be open
+ * @param {function} onMessage - (Optional) Callback when data is received { stress_probability: number, is_stressed: boolean }
+ */
+export function useThermalStressSocket(isActive, onMessage = null) {
+  const socketRef = useRef(null);
+  const [isConnected, setIsConnected] = useState(false);
+  
+  // Backpressure flag: true = waiting for server, false = ready to send
+  // This prevents flooding the backend if inference is slower than the camera FPS.
+  const [isProcessing, setIsProcessing] = useState(false); 
+
+  // REF PATTERN: Keeps the callback fresh without forcing the socket to reconnect
+  const onMessageRef = useRef(onMessage);
+  
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
+
+  useEffect(() => {
+    // If not active, do not open a connection
+    if (!isActive) return;
+
+    // Initialize WebSocket
+    const ws = new WebSocket(WS_URL);
+    socketRef.current = ws;
+
+    ws.onopen = () => {
+      console.log("Thermal WS Connected");
+      setIsConnected(true);
+      setIsProcessing(false);
+    };
+
+    ws.onclose = () => {
+      console.log("Thermal WS Disconnected");
+      setIsConnected(false);
+      setIsProcessing(false); // Reset lock on close
+    };
+
+    ws.onerror = (error) => {
+      console.error("Thermal WebSocket Error:", error);
+      // Optional: Only show toast if it was previously connected to avoid spam on load
+      toast.error("Thermal Connection Error", { description: "Lost connection to thermal analysis server." });
+      setIsConnected(false);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        // 1. Server sent a response
+        const data = JSON.parse(event.data);
+        
+        // 2. Unlock the gate: We can now send the next frame
+        setIsProcessing(false);
+
+        // 3. Pass data up to the parent component
+        if (onMessageRef.current) {
+          onMessageRef.current(data);
+        }
+      } catch (err) {
+        console.error("Failed to parse Thermal WebSocket message:", err);
+        // Even if parsing fails, we must unlock to allow future frames
+        setIsProcessing(false);
+      }
+    };
+
+    // Cleanup function
+    return () => {
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close();
+      }
+    };
+  }, [isActive]); // Only reconnect if isActive changes
+
+  const sendFrame = useCallback((blob) => {
+    // Safety Checks
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+
+    // THROTTLING: If server is still busy with previous frame, DROP this frame.
+    // This is crucial for real-time video to avoid lag buildup.
+    if (isProcessing) return; 
+
+    // Send & Lock
+    setIsProcessing(true);
+    socketRef.current.send(blob);
+
+  }, [isProcessing]); // Re-create function when processing state changes
+
+  return { sendFrame, isConnected };
+}

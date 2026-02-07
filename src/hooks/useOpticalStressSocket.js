@@ -7,7 +7,7 @@ const WS_URL = "ws://localhost:8000/api/v1/ws/optical";
  * @param {boolean} isActive - Whether the socket should be open
  * @param {function} onMessage - (Optional) Callback when data is received { stress_score: number }
  */
-export function useStressSocket(isActive, onMessage = null) {
+export function useOpticalStressSocket(isActive, onMessage = null) {
   const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
   
