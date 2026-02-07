@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 // Configuration
 const CAPTURE_INTERVAL_MS = 150; 
-const TARGET_SIZE = 256;         
+const TARGET_SIZE = 224;         
 const FACE_PADDING_PERCENT = 0.2;
 const BOX_COLOR_OK = "#00ff2a";
 const BOX_COLOR_ERROR = "#ef4444";

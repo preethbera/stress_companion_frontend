@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Loader2, AlertCircle, WifiOff, Camera } from "lucide-react";
-import { cn } from "@/lib/utils"; // Assuming you have a cn utility, if not, standard strings work too
+import { cn } from "@/lib/utils";
 
 export function ThermalFeed({ 
   // State Props
@@ -18,7 +18,6 @@ export function ThermalFeed({
   const [imgLoadError, setImgLoadError] = useState(false);
 
   // Reset the local error state whenever the stream URL changes
-  // This allows the component to "retry" automatically if the backend comes back online
   useEffect(() => {
     if (stream) {
       setImgLoadError(false);
@@ -38,14 +37,17 @@ export function ThermalFeed({
     }
   };
 
-  // 2. Handle Image Loading Failures (The "Weird Image" Fix)
+  // 2. Handle Image Loading Failures
   const handleImgError = () => {
     setImgLoadError(true);
   };
 
   if (!isActive) {
     return (
-      <div className="flex flex-col items-center justify-center h-full w-full bg-neutral-900 text-neutral-500">
+      <div className={cn(
+        "flex flex-col items-center justify-center h-full w-full",
+        "bg-muted text-muted-foreground" // Replaced bg-neutral-900/text-neutral-500
+      )}>
         <Camera className="h-12 w-12 mb-2 opacity-20" />
         <p className="text-sm">Thermal Camera Inactive</p>
       </div>
@@ -57,15 +59,19 @@ export function ThermalFeed({
 
   if (activeError) {
     return (
-      <div className="flex flex-col items-center justify-center h-full w-full bg-neutral-900 text-red-400 p-6 text-center border border-neutral-800 rounded-md">
-        <div className="bg-red-500/10 p-4 rounded-full mb-3">
-            <WifiOff className="h-8 w-8 text-red-500" />
+      <div className={cn(
+        "flex flex-col items-center justify-center h-full w-full p-6 text-center border",
+        "bg-card border-border", // Replaced bg-neutral-900/border-neutral-800
+        "text-destructive"       // Replaced text-red-400
+      )}>
+        <div className="bg-destructive/10 p-4 rounded-full mb-3">
+            <WifiOff className="h-8 w-8 text-destructive" />
         </div>
-        <h3 className="text-lg font-semibold text-white mb-1">Thermal Feed Offline</h3>
-        <p className="text-sm text-neutral-400 max-w-[200px] leading-relaxed">
+        <h3 className="text-lg font-semibold text-foreground mb-1">Thermal Feed Offline</h3>
+        <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
           {imgLoadError ? "Cannot connect to the camera stream." : activeError}
         </p>
-        <p className="text-[10px] uppercase tracking-wider text-neutral-600 mt-4 font-mono">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground mt-4 font-mono">
            Status: Disconnected
         </p>
       </div>
@@ -73,20 +79,21 @@ export function ThermalFeed({
   }
 
   return (
-    <div className="relative w-full h-full bg-black overflow-hidden flex items-center justify-center rounded-md border border-neutral-800">
+    <div className={cn(
+      "relative w-full h-full overflow-hidden flex items-center justify-center border",
+      "bg-black border-border" // Kept bg-black for video contrast, standardized border
+    )}>
       
       {/* Loading Overlay */}
       {isLoading && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white backdrop-blur-sm">
-          <Loader2 className="h-8 w-8 animate-spin mb-3 text-orange-500" />
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80 text-foreground backdrop-blur-sm">
+          <Loader2 className="h-8 w-8 animate-spin mb-3 text-primary" />
           <p className="text-sm font-medium">Initializing Thermal Sensor...</p>
         </div>
       )}
 
-      <div className="relative w-full h-full transform scale-x-[-1]">
-        {/* Only render the IMG tag if we have a stream AND no error.
-           This prevents the "broken image icon" from ever appearing.
-        */}
+      <div className="relative w-full h-full -scale-x-100">
+        {/* Only render the IMG tag if we have a stream AND no error. */}
         {stream && !imgLoadError && (
           <img 
             ref={localImgRef} 
@@ -94,7 +101,7 @@ export function ThermalFeed({
             alt="Thermal Feed"
             crossOrigin="anonymous"
             onLoad={handleImgLoad}
-            onError={handleImgError} // <--- This catches the broken image!
+            onError={handleImgError} 
             className="absolute inset-0 w-full h-full object-contain" 
           />
         )}

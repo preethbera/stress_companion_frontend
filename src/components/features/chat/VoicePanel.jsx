@@ -210,7 +210,7 @@ const VoicePanel = ({
               disabled={isGeminiLoading || isSpeaking}
               className={`py-6 !px-5 text-lg font-semibold rounded-xl shadow-md transition-all cursor-pointer ${
                 isMicOn
-                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-lg scale-105"
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-lg"
                   : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg"
               }`}
             >
