@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const CameraStack = ({ 
-  isNormalOpen, 
+  isOpticalOpen, 
   isThermalOpen, 
-  onCloseNormal, 
+  onCloseOptical, 
   onCloseThermal,
   // Slot props allow us to inject the real camera feeds later
   opticalFeedSlot, 
@@ -14,16 +14,16 @@ const CameraStack = ({
 }) => {
 
   // If both are closed, we render nothing (parent should likely collapse the panel)
-  if (!isNormalOpen && !isThermalOpen) return null;
+  if (!isOpticalOpen && !isThermalOpen) return null;
 
   return (
     <div className="flex flex-col h-full w-full bg-background">
       
-      {/* --- NORMAL CAMERA SECTION --- */}
-      {isNormalOpen && (
+      {/* --- Optical CAMERA SECTION --- */}
+      {isOpticalOpen && (
         <div className={cn(
           "relative flex flex-col min-h-0 border-b border-border transition-all duration-300",
-          // If thermal is closed, Normal takes full height (flex-1). 
+          // If thermal is closed, Optical takes full height (flex-1). 
           // If thermal is open, they share space (flex-1 for both).
           "flex-1" 
         )}>
@@ -31,16 +31,16 @@ const CameraStack = ({
           <div className="flex items-center justify-between p-3 h-12 bg-muted/30 border-b">
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground/80">
               <Video className="h-4 w-4 text-blue-500" />
-              <span>Normal Feed</span>
+              <span>Optical Feed</span>
             </div>
             <Button 
               variant="ghost" 
               size="icon" 
               className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
-              onClick={onCloseNormal}
+              onClick={onCloseOptical}
             >
               <X className="h-4 w-4" />
-              <span className="sr-only">Close Normal Camera</span>
+              <span className="sr-only">Close Optical Camera</span>
             </Button>
           </div>
 

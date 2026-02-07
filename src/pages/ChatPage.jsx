@@ -38,7 +38,7 @@ function HiddenCameraUnit({ videoRef, cropCanvasRef }) {
 
 export default function ChatPage({ user, onLogout }) {
   // --- 1. LOCAL UI STATE ---
-  const [isNormalCamOpen, setIsNormalCamOpen] = useState(false);
+  const [isOpticalCamOpen, setIsOpticalCamOpen] = useState(false);
   const [isThermalCamOpen, setIsThermalCamOpen] = useState(false);
   const [showTranscript, setShowTranscript] = useState(true);
 
@@ -71,8 +71,8 @@ export default function ChatPage({ user, onLogout }) {
   // --- 3. HELPER HANDLERS ---
   const toggleCamera = () => {
     // Toggle both for simplicity, or manage individually based on preference
-    const newState = !(isNormalCamOpen || isThermalCamOpen);
-    setIsNormalCamOpen(newState);
+    const newState = !(isOpticalCamOpen || isThermalCamOpen);
+    setIsOpticalCamOpen(newState);
     setIsThermalCamOpen(newState);
   };
 
@@ -85,9 +85,9 @@ export default function ChatPage({ user, onLogout }) {
   // A. Camera Slot (The Visible UI)
   const cameraSlot = (
     <CameraStack
-      isNormalOpen={isNormalCamOpen}
+      isOpticalOpen={isOpticalCamOpen}
       isThermalOpen={isThermalCamOpen}
-      onCloseNormal={() => setIsNormalCamOpen(false)}
+      onCloseOptical={() => setIsOpticalCamOpen(false)}
       onCloseThermal={() => setIsThermalCamOpen(false)}
       opticalFeedSlot={
         <OpticalFeed
@@ -116,7 +116,7 @@ export default function ChatPage({ user, onLogout }) {
       isGeminiLoading={isGeminiLoading}
       isSpeaking={isSpeaking}
       isChatOpen={showTranscript} 
-      isCameraActive={isNormalCamOpen || isThermalCamOpen} 
+      isCameraActive={isOpticalCamOpen || isThermalCamOpen} 
       onStart={handleStartSession}
       onStop={handleStop}
       onToggleMic={toggleMic}
@@ -152,7 +152,7 @@ export default function ChatPage({ user, onLogout }) {
 
         <main className="flex-1 overflow-hidden border-t w-full">
           <ChatLayout
-            showCameraPanel={isNormalCamOpen || isThermalCamOpen}
+            showCameraPanel={isOpticalCamOpen || isThermalCamOpen}
             showTranscriptPanel={showTranscript}
             cameraSlot={cameraSlot}
             voiceSlot={voiceSlot}

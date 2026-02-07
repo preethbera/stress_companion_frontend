@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom"; // <--- 1. Import Navigation
 import { useGemini } from "@/hooks/useGemini"; 
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
-import { useCamera } from "@/hooks/useCamera";
+import { useOpticalCamera } from "@/hooks/useOpticalCamera";
 import { useFaceDetection } from "@/hooks/useFaceDetection";
 import { useFaceTracker } from "@/hooks/useFaceTracker";
 import { useStressSocket } from "@/hooks/useStressSocket";
@@ -56,7 +56,7 @@ export function useChatSession() {
     stream: activeStream,
     error: cameraError, 
     isLoading: isCameraLoading 
-  } = useCamera({ isActive: isVisionActive });
+  } = useOpticalCamera({ isActive: isVisionActive });
 
   // C. AI Model
   const { detectorRef, isModelLoaded, modelError } = useFaceDetection();

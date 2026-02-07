@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-export function useCamera({ isActive = true } = {}) {
+export function useOpticalCamera({ isActive = true } = {}) {
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
   const [error, setError] = useState(null);
