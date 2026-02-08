@@ -7,24 +7,22 @@ export function useOpticalCamera({ isActive = true } = {}) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const stopStream = () => {
+    // 1. Reset State on Toggle
+    if (!isActive) {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
-    };
+      setStream(null);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoading(true);
+    setError(null);
 
     const startCamera = async () => {
-      if (!isActive) {
-        stopStream();
-        setStream(null);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -36,9 +34,20 @@ export function useOpticalCamera({ isActive = true } = {}) {
         });
 
         if (!isMounted) {
-          mediaStream.getTracks().forEach(t => t.stop());
+          mediaStream.getTracks().forEach((t) => t.stop());
           return;
         }
+
+        // 2. Hardware Disconnect Listener
+        // If the user unplugs the camera, this event fires.
+        const videoTrack = mediaStream.getVideoTracks()[0];
+        videoTrack.onended = () => {
+          if (isMounted) {
+            console.warn("Optical Camera Disconnected (Hardware level)");
+            setError("Camera disconnected unexpectedly.");
+            setStream(null); // This triggers the Socket to Close
+          }
+        };
 
         setStream(mediaStream);
         
@@ -46,8 +55,13 @@ export function useOpticalCamera({ isActive = true } = {}) {
           videoRef.current.srcObject = mediaStream;
         }
       } catch (err) {
-        console.error("Camera Error:", err);
-        if (isMounted) setError("Could not access camera. Check permissions.");
+        console.error("Optical Camera Error:", err);
+        if (isMounted) {
+          // 3. Gatekeeper Logic:
+          // If error, Stream MUST be null and Loading MUST be false.
+          setError("Camera access denied or unavailable.");
+          setStream(null); 
+        }
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -55,11 +69,14 @@ export function useOpticalCamera({ isActive = true } = {}) {
 
     startCamera();
 
+    // Cleanup
     return () => {
       isMounted = false;
-      stopStream();
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
     };
-    // stream dependency removed to prevent loop, only re-run on isActive change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive]);
 
   return { videoRef, stream, error, isLoading };

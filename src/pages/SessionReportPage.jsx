@@ -4,7 +4,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
 } from "recharts";
 import {
-  ArrowLeft, Activity, AlertTriangle, Clock, Thermometer, ChevronDown, FileJson, FileText, Eye, EyeOff, Calendar
+  ArrowLeft, Activity, AlertTriangle, Clock, Thermometer, ChevronDown, FileJson, FileText, Eye, Calendar
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,25 +12,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 // --- Configuration ---
-// Centralized chart configuration to avoid hardcoded values in JSX
+// Recharts requires specific hex values for stroke/fill, 
+// these match Tailwind's blue-500 and orange-500.
 const CHART_CONFIG = {
   optical: {
-    stroke: "#3b82f6", // blue-500
+    stroke: "#3b82f6", 
     fillStart: "#3b82f6",
     gradientId: "colorOptical"
   },
   thermal: {
-    stroke: "#f97316", // orange-500
+    stroke: "#f97316", 
     fillStart: "#f97316",
     gradientId: "colorThermal"
   }
 };
 
-// --- Reusable Components ---
-
-/**
- * Reusable Card for displaying a single statistic (Avg, Peak, etc.)
- */
+// --- Reusable Stat Card Component ---
 const StatCard = ({ title, value, subtext, icon: Icon, colorClass, alertCondition = false }) => (
   <Card className="bg-card border-border shadow-sm">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -53,7 +50,6 @@ export default function SessionReportPage() {
   // --- State ---
   const [rawData, setRawData] = useState({ optical: [], thermal: [] });
   const [isExportOpen, setIsExportOpen] = useState(false);
-  const [showThermalDemo, setShowThermalDemo] = useState(false);
 
   // --- 1. Load Data ---
   useEffect(() => {
@@ -61,9 +57,9 @@ export default function SessionReportPage() {
     if (storedData) {
       try {
         const parsed = JSON.parse(storedData);
-        // Normalize structure
-        const opt = Array.isArray(parsed) ? parsed : (parsed.optical || []);
-        const thm = Array.isArray(parsed) ? [] : (parsed.thermal || []);
+        // Ensure robust fallback if keys are missing
+        const opt = Array.isArray(parsed.optical) ? parsed.optical : [];
+        const thm = Array.isArray(parsed.thermal) ? parsed.thermal : [];
         setRawData({ optical: opt, thermal: thm });
       } catch (e) {
         console.error("Failed to parse session data", e);
@@ -82,27 +78,19 @@ export default function SessionReportPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // --- 2. Data Processing & Statistics (Memoized) ---
+  // --- 2. Data Processing & Statistics ---
   const { processedOptical, processedThermal, stats } = useMemo(() => {
-    // 1. Prepare Data Sources
     const optical = rawData.optical || [];
-    
-    // Generate demo thermal data if requested, otherwise use real data
-    let thermal = rawData.thermal || [];
-    if (showThermalDemo && optical.length > 0) {
-      thermal = optical.map((d) => ({
-        timestamp: d.timestamp,
-        prob: 0.2 + Math.random() * 0.5 // Simulated probability 0.2 - 0.7
-      }));
-    }
+    const thermal = rawData.thermal || [];
 
-    // 2. Helper for Stats
+    // Helper: Calculate Avg/Peak
+    // isProb: If true, input is 0.0-1.0, convert to 0-100 for display
     const getStats = (data, valueKey, isProb = false) => {
       if (!data.length) return { avg: 0, peak: 0, hasData: false };
       
       const values = data.map(d => {
-        // If it's probability (0-1), convert to 0-100 for consistent UI
-        return isProb ? (d[valueKey] || 0) * 100 : (d[valueKey] || 0);
+        const val = d[valueKey] || 0;
+        return isProb ? val * 100 : val;
       });
 
       const sum = values.reduce((a, b) => a + b, 0);
@@ -113,11 +101,13 @@ export default function SessionReportPage() {
       };
     };
 
-    const optStats = getStats(optical, 'score');
-    // Thermal usually comes as 'prob' (probability), we normalize to % for display
+    // Optical uses 'score' (0-100)
+    const optStats = getStats(optical, 'score', false);
+    
+    // Thermal uses 'prob' (0.0-1.0) -> Converted to % for Stats UI
     const thmStats = getStats(thermal, 'prob', true); 
 
-    // 3. Calculate Global Duration
+    // Calculate Duration
     const combinedTimestamps = [
       ...optical.map(d => d.timestamp),
       ...thermal.map(d => d.timestamp)
@@ -133,7 +123,9 @@ export default function SessionReportPage() {
       const minutes = Math.floor(diffMs / 60000);
       const seconds = Math.floor((diffMs % 60000) / 1000);
       durationStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-      dateStr = new Date(start).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      dateStr = new Date(start).toLocaleDateString(undefined, { 
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+      });
     }
 
     return {
@@ -146,7 +138,7 @@ export default function SessionReportPage() {
         date: dateStr
       }
     };
-  }, [rawData, showThermalDemo]);
+  }, [rawData]);
 
   // --- 3. Formatters & Handlers ---
   const formatTime = (timestamp) => {
@@ -227,8 +219,9 @@ export default function SessionReportPage() {
                <div>
                  <p className="text-sm font-medium text-muted-foreground">Active Sensors</p>
                  <div className="flex gap-2 mt-1">
-                    {stats.optical.hasData && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium dark:bg-blue-900/30 dark:text-blue-400">Optical</span>}
-                    {(stats.thermal.hasData || showThermalDemo) && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-medium dark:bg-orange-900/30 dark:text-orange-400">Thermal</span>}
+                   {stats.optical.hasData && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium dark:bg-blue-900/30 dark:text-blue-400">Optical</span>}
+                   {stats.thermal.hasData && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-medium dark:bg-orange-900/30 dark:text-orange-400">Thermal</span>}
+                   {!stats.optical.hasData && !stats.thermal.hasData && <span className="text-xs text-muted-foreground">No data recorded</span>}
                  </div>
                </div>
             </div>
@@ -302,22 +295,15 @@ export default function SessionReportPage() {
 
       {/* --- SECTION 3: THERMAL ANALYSIS --- */}
       <div className="space-y-4 pt-8">
-        <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-                <Thermometer className="h-5 w-5 text-orange-500" />
-                <h2 className="text-xl font-semibold">Thermal Camera Analysis</h2>
-            </div>
-            
-            <Button variant="ghost" size="sm" onClick={() => setShowThermalDemo(!showThermalDemo)} className="text-muted-foreground hover:text-foreground text-xs">
-                {showThermalDemo ? <EyeOff className="h-3 w-3 mr-2"/> : <Eye className="h-3 w-3 mr-2"/>}
-                {showThermalDemo ? "Hide Simulation" : "View Demo Data"}
-            </Button>
+        <div className="flex items-center gap-2 mb-2">
+            <Thermometer className="h-5 w-5 text-orange-500" />
+            <h2 className="text-xl font-semibold">Thermal Camera Analysis</h2>
         </div>
 
-        {(stats.thermal.hasData || showThermalDemo) ? (
+        {stats.thermal.hasData ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-4">
                 
-                {/* Thermal Stats Grid - NOW MATCHING OPTICAL */}
+                {/* Thermal Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    <StatCard 
                         title="Average Thermal Stress" 
@@ -339,9 +325,8 @@ export default function SessionReportPage() {
                 {/* Thermal Chart */}
                 <Card className="bg-card border-border">
                     <CardHeader>
-                        <CardTitle className="text-sm uppercase text-muted-foreground tracking-wider flex items-center gap-2">
+                        <CardTitle className="text-sm uppercase text-muted-foreground tracking-wider">
                             Thermal Timeline 
-                            {showThermalDemo && <span className="text-xs bg-orange-500/10 text-orange-500 px-2 py-0.5 rounded ml-2">SIMULATED</span>}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="h-[300px] w-full pl-0">

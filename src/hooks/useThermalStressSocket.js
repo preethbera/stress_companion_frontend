@@ -1,23 +1,17 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 
-const WS_URL = "ws://localhost:8000/api/v1/ws/optical";
+const WS_URL = "ws://localhost:8000/api/v1/ws/thermal";
 const MAX_RETRIES = 5;
 
-/**
- * @param {boolean} shouldConnect - Controlled by the parent (isActive && cameraReady)
- * @param {function} onMessage - Callback for data { stress_probability: 0.0 - 1.0 }
- */
-export function useOpticalStressSocket(shouldConnect, onMessage = null) {
+export function useThermalStressSocket(shouldConnect, onMessage = null) {
   const socketRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const retryCount = useRef(0);
 
-  // Status: 'disconnected' | 'connecting' | 'connected' | 'error'
   const [status, setStatus] = useState("disconnected");
   const [isProcessing, setIsProcessing] = useState(false); 
 
-  // Keep callback fresh
   const onMessageRef = useRef(onMessage);
   useEffect(() => {
     onMessageRef.current = onMessage;
@@ -31,28 +25,25 @@ export function useOpticalStressSocket(shouldConnect, onMessage = null) {
     socketRef.current = ws;
 
     ws.onopen = () => {
-      console.log("Optical WS: Connected");
+      console.log("Thermal WS: Connected");
       setStatus("connected");
       setIsProcessing(false);
-      retryCount.current = 0; // Reset retries on success
+      retryCount.current = 0;
     };
 
     ws.onclose = (event) => {
-      // 1000 = Normal Closure (e.g., user stopped session)
       if (event.code === 1000 || !shouldConnect) {
         setStatus("disconnected");
         setIsProcessing(false);
         return;
       }
 
-      console.warn(`Optical WS Dropped (Code: ${event.code}). Retrying...`);
+      console.warn(`Thermal WS Dropped. Retrying...`);
       setStatus("disconnected");
       setIsProcessing(false);
 
-      // Auto-Reconnect Strategy
       if (retryCount.current < MAX_RETRIES) {
-        const delay = Math.min(1000 * (2 ** retryCount.current), 10000); // Exponential backoff
-        
+        const delay = Math.min(1000 * (2 ** retryCount.current), 10000);
         reconnectTimeoutRef.current = setTimeout(() => {
           if (shouldConnect) {
             retryCount.current += 1;
@@ -61,34 +52,29 @@ export function useOpticalStressSocket(shouldConnect, onMessage = null) {
         }, delay);
       } else {
         setStatus("error");
-        toast.error("Optical System Failed", { description: "Analysis server unreachable." });
+        toast.error("Thermal System Failed", { description: "Analysis server unreachable." });
       }
     };
 
-    ws.onerror = () => {
-      // Handled by onclose
-    };
+    ws.onerror = () => { };
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        setIsProcessing(false); // Unlock
+        setIsProcessing(false);
         if (onMessageRef.current) onMessageRef.current(data);
       } catch (err) {
-        console.error("Optical Parse Error", err);
         setIsProcessing(false);
       }
     };
   }, [shouldConnect]);
 
-  // MAIN EFFECT: The Gatekeeper
   useEffect(() => {
     if (shouldConnect) {
       connect();
     } else {
-      // FORCE CLOSE if Gatekeeper says no
       if (socketRef.current) {
-        socketRef.current.close(1000, "Session ended or Camera failed");
+        socketRef.current.close(1000, "Stop");
         socketRef.current = null;
       }
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);

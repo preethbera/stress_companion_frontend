@@ -5,39 +5,41 @@ import {
   Thermometer,
   AlertCircle,
   WifiOff,
-  Wifi,
+  Loader2, // <--- ADDED MISSING IMPORT
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// --- Sub-component: Status Badge ---
-// Keeps the UI clean using standard borders/backgrounds, but uses semantic colors for status
 const ConnectionBadge = ({ isConnected, isLoading }) => {
-  if (isLoading) return null;
+  // 1. If loading, show yellow "Connecting" state
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[10px] font-medium shadow-sm bg-amber-500/10 border-amber-500/20 text-amber-600">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        <span>Connecting...</span>
+      </div>
+    );
+  }
 
+  // 2. If not loading, show Live (Green) or Offline (Red)
   return (
     <div
       className={cn(
         "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[10px] font-medium transition-colors shadow-sm",
         isConnected
-          ? "bg-background border-border text-foreground" // Live: Clean, neutral look
-          : "bg-destructive/10 border-destructive/20 text-destructive" // Offline: Warning look
+          ? "bg-background border-border text-foreground"
+          : "bg-destructive/10 border-destructive/20 text-destructive"
       )}
     >
       {isConnected ? (
-        <>
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <span>Live</span>
-        </>
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
       ) : (
-        <>
-          <WifiOff className="h-3 w-3" />
-          <span>Offline</span>
-        </>
+        <WifiOff className="h-3 w-3" />
       )}
+      <span>{isConnected ? "Live" : "Offline"}</span>
     </div>
   );
 };
@@ -46,7 +48,7 @@ const ConnectionBadge = ({ isConnected, isLoading }) => {
 const CameraPanel = ({
   title,
   icon: Icon,
-  iconColorClass, // Added this back so you can pass specific colors
+  iconColorClass,
   isConnected,
   isLoading,
   onClose,
@@ -54,12 +56,7 @@ const CameraPanel = ({
   className,
 }) => {
   return (
-    <div
-      className={cn(
-        "relative flex flex-col flex-1 min-h-0 bg-background transition-all",
-        className
-      )}
-    >
+    <div className={cn("relative flex flex-col flex-1 min-h-0 bg-background transition-all", className)}>
       {/* Header */}
       <div className="flex items-center justify-between px-3 h-12 border-b border-border bg-card/50 select-none">
         
@@ -121,7 +118,7 @@ const CameraStack = ({
         <CameraPanel
           title="Optical Feed"
           icon={Video}
-          iconColorClass="text-blue-500" // Restored specific color
+          iconColorClass="text-blue-500"
           isConnected={isOpticalFeedConnected}
           isLoading={isOpticalFeedLoading}
           onClose={onCloseOptical}
@@ -142,7 +139,7 @@ const CameraStack = ({
         <CameraPanel
           title="Thermal Feed"
           icon={Thermometer}
-          iconColorClass="text-orange-500" // Restored specific color
+          iconColorClass="text-orange-500"
           isConnected={isThermalFeedConnected}
           isLoading={isThermalFeedLoading}
           onClose={onCloseThermal}
