@@ -46,7 +46,6 @@ export function OpticalFeed({
     if (video.videoWidth > 0 && video.videoHeight > 0) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      canvas.height = video.videoHeight;
       setIsVideoReady(true);
     }
   };
