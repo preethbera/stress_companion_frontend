@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 // Configuration
-const CAPTURE_INTERVAL_MS = 150; 
 const TARGET_SIZE = 224;         
 const FACE_PADDING_PERCENT = 0.2;
 const BOX_COLOR_OK = "#00ff2a";
@@ -33,7 +32,8 @@ const getMediaMetadata = (el) => {
   return { width: 0, height: 0, isReady: false };
 };
 
-export function useFaceTracker(mediaRef, detector, isActive, onFrameBlob) {
+// ADDED: fps parameter (Defaults to 5 if not provided)
+export function useFaceTracker(mediaRef, detector, isActive, onFrameBlob, fps = 5) {
   const overlayRef = useRef(null);
   const cropCanvasRef = useRef(null);
   const requestRef = useRef(null);
@@ -72,8 +72,6 @@ export function useFaceTracker(mediaRef, detector, isActive, onFrameBlob) {
       }
 
       // Detect
-      // Note: detectForVideo accepts HTMLVideoElement OR HTMLImageElement 
-      // as long as we provide the timestamp.
       try {
         const startTime = performance.now();
         const result = detector.detectForVideo(mediaEl, startTime);
@@ -157,9 +155,13 @@ export function useFaceTracker(mediaRef, detector, isActive, onFrameBlob) {
       }
     };
 
-    const interval = setInterval(processFrame, CAPTURE_INTERVAL_MS);
+    // MODIFIED: Calculate interval based on FPS
+    // If fps is 5, interval is 200ms
+    const intervalTime = 1000 / fps;
+    const interval = setInterval(processFrame, intervalTime);
+    
     return () => clearInterval(interval);
-  }, [isActive, mediaRef, onFrameBlob]);
+  }, [isActive, mediaRef, onFrameBlob, fps]); // Added fps to dependencies
 
   const drawBox = (ctx, box, color) => {
     ctx.strokeStyle = color;

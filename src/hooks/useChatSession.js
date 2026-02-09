@@ -13,6 +13,9 @@ import { useOpticalStressSocket } from "@/hooks/useOpticalStressSocket";
 import { useThermalCamera } from "@/hooks/useThermalCamera";
 import { useThermalStressSocket } from "@/hooks/useThermalStressSocket";
 
+const OPTICAL_FPS_RATE = 5;
+const THERMAL_FPS_RATE = 5;
+
 export function useChatSession() {
   const navigate = useNavigate();
 
@@ -136,7 +139,8 @@ export function useChatSession() {
     opticalVideoRef,       
     detectorRef.current, 
     shouldTrackOptical,         
-    sendOpticalFrame          
+    sendOpticalFrame,
+    OPTICAL_FPS_RATE        
   );
 
   // --- THERMAL TRACKER ---
@@ -146,7 +150,8 @@ export function useChatSession() {
     thermalVideoRef,
     detectorRef.current,
     shouldTrackThermal,
-    sendThermalFrame 
+    sendThermalFrame,
+    THERMAL_FPS_RATE
   );
 
 
