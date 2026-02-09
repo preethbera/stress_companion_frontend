@@ -24,28 +24,51 @@ export function useOpticalCamera({ isActive = true } = {}) {
 
     const startCamera = async () => {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
+        // --- STEP A: List all cameras ---
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+        // Debug: Log what the browser sees (Check your console to see camera names!)
+        console.log("Available Cameras:", videoDevices.map(d => d.label));
+
+        // --- STEP B: Smart Select the Laptop Camera ---
+        // We look for keywords common to built-in laptop cameras.
+        // If we don't find one, we fall back to the first available camera.
+        const laptopCamera = videoDevices.find(device => 
+          device.label.toLowerCase().includes("integrated") || 
+          device.label.toLowerCase().includes("facetime") || 
+          device.label.toLowerCase().includes("built-in") ||
+          device.label.toLowerCase().includes("webcam")
+        );
+
+        // Define constraints based on whether we found a specific ID
+        const constraints = {
           video: {
-            facingMode: "user",
+            // If we found the laptop camera, use its specific ID.
+            // Otherwise, ask for "user" facing mode and hope for the best.
+            deviceId: laptopCamera ? { exact: laptopCamera.deviceId } : undefined,
+            facingMode: laptopCamera ? undefined : "user",
             width: { ideal: 640 },
             height: { ideal: 480 },
           },
           audio: false,
-        });
+        };
+
+        // --- STEP C: Request the Stream ---
+        const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
 
         if (!isMounted) {
           mediaStream.getTracks().forEach((t) => t.stop());
           return;
         }
 
-        // 2. Hardware Disconnect Listener
-        // If the user unplugs the camera, this event fires.
+        // Hardware Disconnect Listener
         const videoTrack = mediaStream.getVideoTracks()[0];
         videoTrack.onended = () => {
           if (isMounted) {
             console.warn("Optical Camera Disconnected (Hardware level)");
             setError("Camera disconnected unexpectedly.");
-            setStream(null); // This triggers the Socket to Close
+            setStream(null);
           }
         };
 
@@ -57,9 +80,12 @@ export function useOpticalCamera({ isActive = true } = {}) {
       } catch (err) {
         console.error("Optical Camera Error:", err);
         if (isMounted) {
-          // 3. Gatekeeper Logic:
-          // If error, Stream MUST be null and Loading MUST be false.
-          setError("Camera access denied or unavailable.");
+          // Improve error message if it looks like a "Device Busy" error
+          if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+             setError("Camera is busy. Is another app (or the thermal backend) using it?");
+          } else {
+             setError("Camera access denied or unavailable.");
+          }
           setStream(null); 
         }
       } finally {
