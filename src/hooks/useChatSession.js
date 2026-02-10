@@ -240,7 +240,7 @@ export function useChatSession() {
     thermalTimelineRef.current = [];
     setLiveStressScore(null);
     
-    const initialMsg = "Hey! How's your day going so far?";
+    const initialMsg = "I'm listening. You can speak freely here. How are you feeling?";
     setMessages([{ id: Date.now().toString(), role: "assistant", content: initialMsg }]);
     speak(initialMsg);
   }, [speak]);
