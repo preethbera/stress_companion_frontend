@@ -13,8 +13,8 @@ import { useOpticalStressSocket } from "@/hooks/useOpticalStressSocket";
 import { useThermalCamera } from "@/hooks/useThermalCamera";
 import { useThermalStressSocket } from "@/hooks/useThermalStressSocket";
 
-const OPTICAL_FPS_RATE = 5;
-const THERMAL_FPS_RATE = 5;
+const OPTICAL_FPS_RATE = 3;
+const THERMAL_FPS_RATE = 3;
 
 export function useChatSession() {
   const navigate = useNavigate();
@@ -240,7 +240,7 @@ export function useChatSession() {
     thermalTimelineRef.current = [];
     setLiveStressScore(null);
     
-    const initialMsg = "I'm listening. You can speak freely here. How are you feeling?";
+    const initialMsg = "Hey! How's your day going so far?";
     setMessages([{ id: Date.now().toString(), role: "assistant", content: initialMsg }]);
     speak(initialMsg);
   }, [speak]);
