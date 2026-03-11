@@ -1,20 +1,21 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
+  typeof window !== "undefined" &&
+  (window.SpeechRecognition || window.webkitSpeechRecognition);
 
-export function useSpeechRecognition({ onResult, onEnd }) {
+export function useSpeechRecognition({ deviceId, onResult, onEnd }) {
   const [isMicOn, setIsMicOn] = useState(false);
   const recognitionRef = useRef(null);
   
-  // Refs keep track of the latest callbacks without restarting the effect
+  // Refs keep track of the latest callbacks without causing effect re-runs
   const onResultRef = useRef(onResult);
   const onEndRef = useRef(onEnd);
 
   useEffect(() => {
     onResultRef.current = onResult;
     onEndRef.current = onEnd;
-  });
+  }, [onResult, onEnd]);
 
   useEffect(() => {
     if (!SpeechRecognition) return;
@@ -24,9 +25,12 @@ export function useSpeechRecognition({ onResult, onEnd }) {
     recognition.interimResults = true;
     recognition.lang = "en-IN";
 
+    /* NOTE: The native Web Speech API ignores `deviceId`. It uses the system default. 
+      We accept `deviceId` as a prop so the parent architecture remains solid 
+      for future upgrades to custom AudioContext/STT providers.
+    */
+
     recognition.onresult = (event) => {
-      // Logic to handle both interim and final results if you want real-time typing effect
-      // But based on your code, simple access is fine:
       let transcript = "";
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         transcript += event.results[i][0].transcript;
@@ -47,13 +51,14 @@ export function useSpeechRecognition({ onResult, onEnd }) {
     recognitionRef.current = recognition;
 
     return () => {
-      recognition.stop();
+      // abort() is safer than stop() during cleanup to prevent hanging events
+      recognition.abort(); 
     };
-  }, []);
+  }, []); 
 
   const startListening = useCallback(() => {
-    if (!SpeechRecognition) {
-      alert("Speech recognition is not supported in this browser.");
+    if (!recognitionRef.current) {
+      console.warn("Speech recognition is not supported in this browser.");
       return;
     }
     try {
@@ -65,7 +70,9 @@ export function useSpeechRecognition({ onResult, onEnd }) {
   }, []);
 
   const stopListening = useCallback(() => {
-    if (recognitionRef.current) recognitionRef.current.stop();
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
     setIsMicOn(false);
   }, []);
 

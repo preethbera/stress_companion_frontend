@@ -1,23 +1,33 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 // --- HOOK IMPORTS ---
-import { useGemini } from "@/hooks/useGemini"; 
+import { useGemini } from "@/hooks/useGemini";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useFaceDetection } from "@/hooks/useFaceDetection";
 import { useFaceTracker } from "@/hooks/useFaceTracker";
-import { useOpticalCamera } from "@/hooks/useOpticalCamera";
-import { useOpticalStressSocket } from "@/hooks/useOpticalStressSocket";
-import { useThermalCamera } from "@/hooks/useThermalCamera";
-import { useThermalStressSocket } from "@/hooks/useThermalStressSocket";
+
+// IMPORT OUR NEW UNIFIED HOOKS
+import { useWebcamStream } from "@/hooks/useWebcamStream";
+import { useStressSocket } from "@/hooks/useStressSocket";
 
 const OPTICAL_FPS_RATE = 3;
 const THERMAL_FPS_RATE = 3;
 
-export function useChatSession() {
+// Accept setupData as a parameter
+export function useChatSession(setupData = {}) {
   const navigate = useNavigate();
+
+  // Destructure hardware preferences
+  const {
+    micDeviceId,
+    opticalDeviceId,
+    optOutOptical,
+    thermalDeviceId,
+    optOutThermal,
+  } = setupData;
 
   // ============================================================
   // 1. CORE STATE
@@ -25,13 +35,11 @@ export function useChatSession() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [hasStarted, setHasStarted] = useState(false);
-  const [aiState, setAiState] = useState("idle"); 
-  
-  // PERFORMANCE: Use Refs for high-frequency data
+  const [aiState, setAiState] = useState("idle");
+
   const stressTimelineRef = useRef([]);
   const thermalTimelineRef = useRef([]);
-  
-  // UI STATE: Throttled data for graphs
+
   const [liveStressScore, setLiveStressScore] = useState(null);
 
   const hasStartedRef = useRef(false);
@@ -40,78 +48,80 @@ export function useChatSession() {
   // ============================================================
   // 2. AI MODEL
   // ============================================================
-  const { detectorRef, isModelLoaded, modelError } = useFaceDetection();
+  const {
+    detectorRef: opticalDetector,
+    isModelLoaded: isOpticalLoaded,
+    modelError: opticalModelError,
+  } = useFaceDetection();
+
+  const {
+    detectorRef: thermalDetector,
+    isModelLoaded: isThermalLoaded,
+    modelError: thermalModelError,
+  } = useFaceDetection();
 
   // ============================================================
-  // 3. CAMERAS
+  // 3. CAMERAS (USING THE UNIFIED HOOK)
   // ============================================================
-  
-  // OPTICAL CAMERA
-  const { 
-    videoRef: opticalVideoRef, 
+
+  const {
+    videoRef: opticalVideoRef,
     stream: opticalStream,
-    error: opticalError, 
-    isLoading: isOpticalLoading 
-  } = useOpticalCamera({ isActive: isVisionActive });
+    error: opticalError,
+    isLoading: isOpticalLoading,
+  } = useWebcamStream(opticalDeviceId, optOutOptical, isVisionActive);
 
-  // THERMAL CAMERA
   const {
     videoRef: thermalVideoRef,
     stream: thermalStream,
     error: thermalError,
-    isLoading: isThermalLoading
-  } = useThermalCamera({ isActive: isVisionActive });
-
+    isLoading: isThermalLoading,
+  } = useWebcamStream(thermalDeviceId, optOutThermal, isVisionActive);
 
   // ============================================================
   // 4. SOCKET GATEKEEPING
   // ============================================================
-  // Only connect socket if: Vision is Active AND Camera is Streamable AND No Errors AND Not Loading
-  const shouldConnectOptical = isVisionActive && !!opticalStream && !opticalError && !isOpticalLoading;
-  const shouldConnectThermal = isVisionActive && !!thermalStream && !thermalError && !isThermalLoading;
-
+  // Strict check: User didn't opt out + Session Active + Stream Ready
+  const shouldConnectOptical =
+    !optOutOptical &&
+    isVisionActive &&
+    !!opticalStream &&
+    !opticalError &&
+    !isOpticalLoading;
+  const shouldConnectThermal =
+    !optOutThermal &&
+    isVisionActive &&
+    !!thermalStream &&
+    !thermalError &&
+    !isThermalLoading;
 
   // ============================================================
-  // 5. SOCKET HANDLERS (UPDATED FOR NEW BACKEND DATA)
+  // 5. SOCKET HANDLERS (USING THE UNIFIED HOOK)
   // ============================================================
-  
+
   const handleOpticalMessage = useCallback((data) => {
-    // Backend sends: { stress_probability: 0.0 - 1.0 }
     if (data?.stress_probability !== undefined) {
-      // CLIENT-SIDE CALCULATION: Convert Prob to Score (0-100)
       const score = Math.round(data.stress_probability * 100);
-
-      stressTimelineRef.current.push({ 
-        timestamp: Date.now(), 
-        score: score 
-      });
+      stressTimelineRef.current.push({ timestamp: Date.now(), score: score });
     }
   }, []);
 
   const handleThermalMessage = useCallback((data) => {
-    // Backend sends: { stress_probability: 0.0 - 1.0 }
     if (data?.stress_probability !== undefined) {
-      // CLIENT-SIDE CALCULATION: Convert Prob to Boolean (Threshold > 0.5)
       const isStressed = data.stress_probability > 0.5;
-
-      thermalTimelineRef.current.push({ 
-        timestamp: Date.now(), 
+      thermalTimelineRef.current.push({
+        timestamp: Date.now(),
         prob: data.stress_probability,
-        isStressed: isStressed 
+        isStressed: isStressed,
       });
     }
   }, []);
 
-  // Initialize Sockets
-  const { sendFrame: sendOpticalFrame, status: opticalStatus } = useOpticalStressSocket(
-    shouldConnectOptical, 
-    handleOpticalMessage 
-  );
+  const { sendFrame: sendOpticalFrame, status: opticalStatus } =
+    useStressSocket("optical", shouldConnectOptical, handleOpticalMessage);
 
-  const { sendFrame: sendThermalFrame, status: thermalStatus } = useThermalStressSocket(
-    shouldConnectThermal,
-    handleThermalMessage
-  );
+  const { sendFrame: sendThermalFrame, status: thermalStatus } =
+    useStressSocket("thermal", shouldConnectThermal, handleThermalMessage);
 
   // ============================================================
   // 6. THROTTLED UI UPDATES
@@ -127,96 +137,135 @@ export function useChatSession() {
     return () => clearInterval(interval);
   }, [hasStarted]);
 
-
   // ============================================================
   // 7. TRACKERS
   // ============================================================
-  
+
   // --- OPTICAL TRACKER ---
-  const shouldTrackOptical = shouldConnectOptical && isModelLoaded && opticalStatus === "connected";
-  
-  const { overlayRef: opticalOverlayRef, cropCanvasRef: opticalCropRef } = useFaceTracker(
-    opticalVideoRef,       
-    detectorRef.current, 
-    shouldTrackOptical,         
-    sendOpticalFrame,
-    OPTICAL_FPS_RATE        
-  );
+  const shouldTrackOptical =
+    shouldConnectOptical && isOpticalLoaded && opticalStatus === "connected";
+
+  const { overlayRef: opticalOverlayRef, cropCanvasRef: opticalCropRef } =
+    useFaceTracker(
+      opticalVideoRef,
+      opticalDetector.current, // Uses Optical Brain
+      shouldTrackOptical,
+      sendOpticalFrame,
+      OPTICAL_FPS_RATE,
+    );
 
   // --- THERMAL TRACKER ---
-  const shouldTrackThermal = shouldConnectThermal && isModelLoaded && thermalStatus === "connected";
+  const shouldTrackThermal =
+    shouldConnectThermal && isThermalLoaded && thermalStatus === "connected";
 
-  const { overlayRef: thermalOverlayRef, cropCanvasRef: thermalCropRef } = useFaceTracker(
-    thermalVideoRef,
-    detectorRef.current,
-    shouldTrackThermal,
-    sendThermalFrame,
-    THERMAL_FPS_RATE
-  );
-
+  const { overlayRef: thermalOverlayRef, cropCanvasRef: thermalCropRef } =
+    useFaceTracker(
+      thermalVideoRef,
+      thermalDetector.current, // Uses Thermal Brain
+      shouldTrackThermal,
+      sendThermalFrame,
+      THERMAL_FPS_RATE,
+    );
 
   // ============================================================
   // 8. DATA BUNDLING
   // ============================================================
 
-  const visionState = useMemo(() => ({
-    isActive: isVisionActive,
-    status: opticalStatus, 
-    isConnected: opticalStatus === "connected",
-    isLoading: isVisionActive && (isOpticalLoading || opticalStatus === "connecting"),
-    error: opticalError || modelError,
-    stream: opticalStream,       
-    overlayRef: opticalOverlayRef,    
-    cropCanvasRef: opticalCropRef,
-    masterVideoRef: opticalVideoRef 
-  }), [isVisionActive, opticalStatus, isOpticalLoading, opticalError, modelError, opticalStream, opticalOverlayRef, opticalCropRef, opticalVideoRef]);
+  const visionState = useMemo(
+    () => ({
+      isOptedOut: optOutOptical, // Tell the UI if this was skipped
+      isActive: isVisionActive,
+      status: opticalStatus,
+      isConnected: opticalStatus === "connected",
+      isLoading:
+        isVisionActive && (isOpticalLoading || opticalStatus === "connecting"),
+      error: opticalError || opticalModelError,
+      stream: opticalStream,
+      overlayRef: opticalOverlayRef,
+      cropCanvasRef: opticalCropRef,
+      masterVideoRef: opticalVideoRef,
+    }),
+    [
+      optOutOptical,
+      isVisionActive,
+      opticalStatus,
+      isOpticalLoading,
+      opticalError,
+      opticalModelError,
+      opticalStream,
+      opticalOverlayRef,
+      opticalCropRef,
+      opticalVideoRef,
+    ],
+  );
 
-  const thermalState = useMemo(() => ({
-    isActive: isVisionActive,
-    status: thermalStatus,
-    isConnected: thermalStatus === "connected",
-    isLoading: isVisionActive && (isThermalLoading || thermalStatus === "connecting"),
-    error: thermalError,
-    stream: thermalStream,
-    overlayRef: thermalOverlayRef,
-    cropCanvasRef: thermalCropRef,
-    masterVideoRef: thermalVideoRef 
-  }), [isVisionActive, thermalStatus, isThermalLoading, thermalError, thermalStream, thermalOverlayRef, thermalCropRef, thermalVideoRef]);
-
+  const thermalState = useMemo(
+    () => ({
+      isOptedOut: optOutThermal, // Tell the UI if this was skipped
+      isActive: isVisionActive,
+      status: thermalStatus,
+      isConnected: thermalStatus === "connected",
+      isLoading:
+        isVisionActive && (isThermalLoading || thermalStatus === "connecting"),
+      error: thermalError || thermalModelError,
+      stream: thermalStream,
+      overlayRef: thermalOverlayRef,
+      cropCanvasRef: thermalCropRef,
+      masterVideoRef: thermalVideoRef,
+    }),
+    [
+      optOutThermal,
+      isVisionActive,
+      thermalStatus,
+      isThermalLoading,
+      thermalError,
+      thermalModelError,
+      thermalStream,
+      thermalOverlayRef,
+      thermalCropRef,
+      thermalVideoRef,
+    ],
+  );
 
   // ============================================================
   // 9. AUDIO & INTELLIGENCE
   // ============================================================
   const { sendMessage, isLoading: isGeminiLoading } = useGemini();
 
-  const { isMicOn, startListening, stopListening, toggleMic } = useSpeechRecognition({
-    onResult: (transcript) => setInput(transcript),
-    onEnd: () => setAiState((prev) => (prev === "thinking" ? "thinking" : "idle")),
-  });
+  const { isMicOn, startListening, stopListening, toggleMic } =
+    useSpeechRecognition({
+      deviceId: micDeviceId, // Pass the chosen mic to your speech hook!
+      onResult: (transcript) => setInput(transcript),
+      onEnd: () =>
+        setAiState((prev) => (prev === "thinking" ? "thinking" : "idle")),
+    });
 
-  const ttsOptions = useMemo(() => ({
-    onSpeakStart: () => setAiState("speaking"),
-    onSpeakEnd: () => {
-      setAiState("idle");
-      setTimeout(() => { if (hasStartedRef.current) startListening(); }, 200);
-    },
-  }), [startListening]);
+  const ttsOptions = useMemo(
+    () => ({
+      onSpeakStart: () => setAiState("speaking"),
+      onSpeakEnd: () => {
+        setAiState("idle");
+        setTimeout(() => {
+          if (hasStartedRef.current) startListening();
+        }, 200);
+      },
+    }),
+    [startListening],
+  );
 
   const { speak, cancelSpeech } = useTextToSpeech(ttsOptions);
-
 
   // ============================================================
   // 10. ACTION HANDLERS
   // ============================================================
 
   const handleStop = useCallback(() => {
-    cancelSpeech();   
-    stopListening();  
+    cancelSpeech();
+    stopListening();
     setAiState("idle");
     setHasStarted(false);
     hasStartedRef.current = false;
 
-    // SAVE DATA
     const finalOpticalData = stressTimelineRef.current;
     const finalThermalData = thermalTimelineRef.current;
 
@@ -224,7 +273,7 @@ export function useChatSession() {
       const sessionData = {
         optical: finalOpticalData,
         thermal: finalThermalData,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
       sessionStorage.setItem("lastSessionData", JSON.stringify(sessionData));
     }
@@ -234,54 +283,87 @@ export function useChatSession() {
   const handleStartSession = useCallback(() => {
     setHasStarted(true);
     hasStartedRef.current = true;
-    
-    // Reset Data
+
     stressTimelineRef.current = [];
     thermalTimelineRef.current = [];
     setLiveStressScore(null);
-    
-    const initialMsg = "I'm listening. You can speak freely here. How are you feeling?";
-    setMessages([{ id: Date.now().toString(), role: "assistant", content: initialMsg }]);
+
+    const initialMsg =
+      "I'm listening. You can speak freely here. How are you feeling?";
+    setMessages([
+      { id: Date.now().toString(), role: "assistant", content: initialMsg },
+    ]);
     speak(initialMsg);
   }, [speak]);
 
-  const handleSendMessage = useCallback(async (textOverride) => {
-    const textToSend = typeof textOverride === "string" ? textOverride : input;
-    if (!textToSend.trim()) return;
+  const handleSendMessage = useCallback(
+    async (textOverride) => {
+      const textToSend =
+        typeof textOverride === "string" ? textOverride : input;
+      if (!textToSend.trim()) return;
 
-    const userMsg = { id: Date.now().toString(), role: "user", content: textToSend };
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    setAiState("thinking");
-    cancelSpeech(); 
-    stopListening(); 
+      const userMsg = {
+        id: Date.now().toString(),
+        role: "user",
+        content: textToSend,
+      };
+      setMessages((prev) => [...prev, userMsg]);
+      setInput("");
+      setAiState("thinking");
+      cancelSpeech();
+      stopListening();
 
-    try {
-      const aiText = await sendMessage(textToSend);
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: aiText }]);
-      speak(aiText);
-    } catch (error) {
-      console.error("Failed to get response:", error);
-      setAiState("idle");
-    }
-  }, [input, sendMessage, speak, cancelSpeech, stopListening]);
+      try {
+        const aiText = await sendMessage(textToSend);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: aiText,
+          },
+        ]);
+        speak(aiText);
+      } catch (error) {
+        console.error("Failed to get response:", error);
+        setAiState("idle");
+      }
+    },
+    [input, sendMessage, speak, cancelSpeech, stopListening],
+  );
 
-  // Automation Effects
-  useEffect(() => { if (isMicOn && aiState === "idle") setAiState("listening"); }, [isMicOn, aiState]);
   useEffect(() => {
-    if (!isMicOn && input.trim() && hasStarted && aiState === "idle" && !isGeminiLoading) {
+    if (isMicOn && aiState === "idle") setAiState("listening");
+  }, [isMicOn, aiState]);
+  useEffect(() => {
+    if (
+      !isMicOn &&
+      input.trim() &&
+      hasStarted &&
+      aiState === "idle" &&
+      !isGeminiLoading
+    ) {
       handleSendMessage();
     }
   }, [isMicOn, input, hasStarted, aiState, isGeminiLoading, handleSendMessage]);
 
   return {
-    messages, input, setInput, aiState, hasStarted, isMicOn,
-    isSpeaking: aiState === "speaking", isGeminiLoading,
-    liveStressScore, 
-    
-    cameraProps: visionState,    
-    thermalProps: thermalState,  
-    
-    handleStartSession, handleSendMessage, toggleMic, handleStop,
+    messages,
+    input,
+    setInput,
+    aiState,
+    hasStarted,
+    isMicOn,
+    isSpeaking: aiState === "speaking",
+    isGeminiLoading,
+    liveStressScore,
+
+    cameraProps: visionState,
+    thermalProps: thermalState,
+
+    handleStartSession,
+    handleSendMessage,
+    toggleMic,
+    handleStop,
   };
 }

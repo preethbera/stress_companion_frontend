@@ -7,8 +7,8 @@ import SettingsPage from "./pages/SettingsPage";
 import { ThemeProvider } from "@/components/theme-provider";
 import Dashboard from "./pages/Dashboard";
 import { Layout } from "@/components/layout/Layout";
-import ChatPage from "@/pages/ChatPage";
 import SessionReportPage from "./pages/SessionReportPage";
+import StressSessionManager from "./pages/StressSessionManager";
 
 const History = () => (
   <div className="py-8 text-2xl font-bold">Your Activity History</div>
@@ -87,18 +87,11 @@ export default function App() {
               )
             }
           />
+          <Route path="/chat" element={user ? (
+            <StressSessionManager user={user} onLogout={handleLogout} />
+          ) : <Navigate to="/login" />} />
           <Route
-            path="/chat"
-            element={
-              user ? (
-                <ChatPage user={user} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-          path="/report"
+            path="/report"
             element={
               user ? (
                 <Layout user={user} onLogout={handleLogout}>
