@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useFaceDetection } from "@/hooks/useFaceDetection";
+import { API_ENDPOINTS } from "@/config/api";
 
 // ============================================================================
 // 1. HARDWARE PERMISSION CHECKER
@@ -310,7 +311,7 @@ export function useCameraStepLogic({
 // ============================================================================
 // 6. BACKEND DIAGNOSTICS
 // ============================================================================
-export function useBackendHealth(url = "http://localhost:8000/health") {
+export function useBackendHealth(url = API_ENDPOINTS.HEALTH) {
   const [isConnecting, setIsConnecting] = useState(true);
   const [backendError, setBackendError] = useState(false);
 
@@ -319,39 +320,33 @@ export function useBackendHealth(url = "http://localhost:8000/health") {
 
     const checkHealth = async () => {
       try {
-        // 1. Make the actual network request to FastAPI
         const response = await fetch(url);
-
-        // 2. Check if the HTTP status code is 200 OK
-        if (!response.ok) {
-          throw new Error("Server responded with an error");
-        }
-
-        // 3. Parse the JSON response
+        if (!response.ok) throw new Error("Server responded with an error");
         const data = await response.json();
 
         if (isMounted) {
           setIsConnecting(false);
-          // 4. Verify your exact payload {"status": "ok"}
           if (data.status === "ok") {
-            setBackendError(false); // Success! Green checkmark will show.
+            setBackendError(false);
           } else {
             setBackendError(true);
           }
         }
       } catch (err) {
-        console.error("Backend health check failed:", err);
+        // 👇 Remove console.error in production to keep the browser console clean
+        if (import.meta.env.DEV) {
+          console.error("Backend health check failed:", err);
+        }
+        
         if (isMounted) {
           setIsConnecting(false);
-          setBackendError(true); // Network error, server down, or CORS issue
+          setBackendError(true); 
         }
       }
     };
 
     checkHealth();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [url]);
 
   return { isConnecting, backendError };

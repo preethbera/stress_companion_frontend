@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-
-const API_URL = "http://127.0.0.1:8000/api/v1/chat";
+import { API_ENDPOINTS } from "@/config/api";
 
 export function useGemini() {
   const [isLoading, setIsLoading] = useState(false);
@@ -14,7 +13,7 @@ export function useGemini() {
     setError(null);
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(API_ENDPOINTS.CHAT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

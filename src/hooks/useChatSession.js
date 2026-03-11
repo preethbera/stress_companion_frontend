@@ -1,20 +1,15 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-
-// --- HOOK IMPORTS ---
 import { useGemini } from "@/hooks/useGemini";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useFaceDetection } from "@/hooks/useFaceDetection";
 import { useFaceTracker } from "@/hooks/useFaceTracker";
-
-// IMPORT OUR NEW UNIFIED HOOKS
 import { useWebcamStream } from "@/hooks/useWebcamStream";
 import { useStressSocket } from "@/hooks/useStressSocket";
+import { CAMERA_CONFIG } from "@/config/constants";
 
-const OPTICAL_FPS_RATE = 3;
-const THERMAL_FPS_RATE = 3;
 
 // Accept setupData as a parameter
 export function useChatSession(setupData = {}) {
@@ -151,7 +146,7 @@ export function useChatSession(setupData = {}) {
       opticalDetector.current, // Uses Optical Brain
       shouldTrackOptical,
       sendOpticalFrame,
-      OPTICAL_FPS_RATE,
+      CAMERA_CONFIG.OPTICAL_FPS_RATE,
     );
 
   // --- THERMAL TRACKER ---
@@ -164,7 +159,7 @@ export function useChatSession(setupData = {}) {
       thermalDetector.current, // Uses Thermal Brain
       shouldTrackThermal,
       sendThermalFrame,
-      THERMAL_FPS_RATE,
+      CAMERA_CONFIG.THERMAL_FPS_RATE,
     );
 
   // ============================================================

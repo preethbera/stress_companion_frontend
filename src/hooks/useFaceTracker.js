@@ -1,11 +1,6 @@
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
-
-// Configuration
-const TARGET_SIZE = 224;         
-const FACE_PADDING_PERCENT = 0.2;
-const BOX_COLOR_OK = "#00ff2a";
-const BOX_COLOR_ERROR = "#ef4444";
+import { TRACKER_CONFIG } from "@/config/constants";
 
 /**
  * Helper: Normalizes differences between <video> and <img> elements
@@ -89,7 +84,7 @@ export function useFaceTracker(mediaRef, detector, isActive, onFrameBlob, fps = 
         if (detections.length > 1) {
           latestDetectionRef.current = null;
           triggerAlert("Multiple faces", "Ensure only one person is visible.");
-          detections.forEach(d => drawBox(ctx, d.boundingBox, BOX_COLOR_ERROR));
+          detections.forEach(d => drawBox(ctx, d.boundingBox, TRACKER_CONFIG.BOX_COLOR_ERROR));
         } else if (detections.length === 0) {
           latestDetectionRef.current = null;
           // Optional: You might want to disable "No face" alerts for Thermal 
@@ -97,7 +92,7 @@ export function useFaceTracker(mediaRef, detector, isActive, onFrameBlob, fps = 
           triggerAlert("No face detected", "Please align your face.");
         } else {
           latestDetectionRef.current = detections[0];
-          drawBox(ctx, detections[0].boundingBox, BOX_COLOR_OK);
+          drawBox(ctx, detections[0].boundingBox, TRACKER_CONFIG.BOX_COLOR_OK);
         }
       } catch (err) {
         console.warn("Detection failed:", err);
@@ -128,14 +123,14 @@ export function useFaceTracker(mediaRef, detector, isActive, onFrameBlob, fps = 
       const { boundingBox } = detection;
       const ctx = cropCanvasRef.current.getContext("2d");
 
-      if (cropCanvasRef.current.width !== TARGET_SIZE) {
-        cropCanvasRef.current.width = TARGET_SIZE;
-        cropCanvasRef.current.height = TARGET_SIZE;
+      if (cropCanvasRef.current.width !== TRACKER_CONFIG.TARGET_SIZE) {
+        cropCanvasRef.current.width = TRACKER_CONFIG.TARGET_SIZE;
+        cropCanvasRef.current.height = TRACKER_CONFIG.TARGET_SIZE;
       }
 
       // Calculate Crop
-      const paddingX = boundingBox.width * FACE_PADDING_PERCENT;
-      const paddingY = boundingBox.height * FACE_PADDING_PERCENT;
+      const paddingX = boundingBox.width * TRACKER_CONFIG.FACE_PADDING_PERCENT;
+      const paddingY = boundingBox.height * TRACKER_CONFIG.FACE_PADDING_PERCENT;
       
       // Ensure we don't crop outside the image bounds
       const x = Math.max(0, boundingBox.originX - paddingX);
@@ -144,7 +139,7 @@ export function useFaceTracker(mediaRef, detector, isActive, onFrameBlob, fps = 
       const h = Math.min(height - y, boundingBox.height + (paddingY * 2));
 
       // Draw & Convert
-      ctx.drawImage(mediaEl, x, y, w, h, 0, 0, TARGET_SIZE, TARGET_SIZE);
+      ctx.drawImage(mediaEl, x, y, w, h, 0, 0, TRACKER_CONFIG.TARGET_SIZE, TRACKER_CONFIG.TARGET_SIZE);
 
       if (onFrameBlob) {
         cropCanvasRef.current.toBlob(

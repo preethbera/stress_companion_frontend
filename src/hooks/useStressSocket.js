@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
-
-const BASE_WS_URL = "ws://localhost:8000/api/v1/ws";
-const MAX_RETRIES = 5;
+import { API_ENDPOINTS } from "@/config/api";
+import { NETWORK_CONFIG } from "@/config/constants";
 
 /**
  * A universal WebSocket hook for streaming frames to the backend.
@@ -29,14 +28,21 @@ export function useStressSocket(endpoint, shouldConnect, onMessage = null) {
     if (!shouldConnect) return;
 
     setStatus("connecting");
-    const ws = new WebSocket(`${BASE_WS_URL}/${endpoint}`);
+    
+    // Use the dynamic URL builder from your centralized API config
+    const wsUrl = API_ENDPOINTS.STRESS_WS(endpoint);
+    const ws = new WebSocket(wsUrl);
+    
     socketRef.current = ws;
 
     // Helper for logs/toasts (e.g., turns "optical" into "Optical")
     const systemName = endpoint.charAt(0).toUpperCase() + endpoint.slice(1);
 
     ws.onopen = () => {
-      console.log(`${systemName} WS: Connected`);
+      // Only log successful connections in development mode
+      if (import.meta.env.DEV) {
+        console.log(`${systemName} WS: Connected`);
+      }
       setStatus("connected");
       setIsProcessing(false);
       retryCount.current = 0; // Reset retries on success
@@ -50,12 +56,15 @@ export function useStressSocket(endpoint, shouldConnect, onMessage = null) {
         return;
       }
 
-      console.warn(`${systemName} WS Dropped (Code: ${event.code}). Retrying...`);
+      if (import.meta.env.DEV) {
+        console.warn(`${systemName} WS Dropped (Code: ${event.code}). Retrying...`);
+      }
+      
       setStatus("disconnected");
       setIsProcessing(false);
 
       // Auto-Reconnect Strategy (Exponential Backoff)
-      if (retryCount.current < MAX_RETRIES) {
+      if (retryCount.current < NETWORK_CONFIG.MAX_RETRIES) {
         const delay = Math.min(1000 * (2 ** retryCount.current), 10000); 
         
         reconnectTimeoutRef.current = setTimeout(() => {
@@ -82,7 +91,9 @@ export function useStressSocket(endpoint, shouldConnect, onMessage = null) {
         setIsProcessing(false); // Unlock for next frame
         if (onMessageRef.current) onMessageRef.current(data);
       } catch (err) {
-        console.error(`${systemName} Parse Error`, err);
+        if (import.meta.env.DEV) {
+          console.error(`${systemName} Parse Error`, err);
+        }
         setIsProcessing(false);
       }
     };
