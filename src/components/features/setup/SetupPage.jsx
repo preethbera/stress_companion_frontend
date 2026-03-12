@@ -3,13 +3,14 @@
 import React, { useState, useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 import { PermissionStep } from "@/components/features/setup/PermissionStep";
 import { MicrophoneStep } from "@/components/features/setup/MicrophoneStep";
 import { OpticalStep } from "@/components/features/setup/OpticalStep";
 import { ThermalStep } from "@/components/features/setup/ThermalStep";
 import { ConnectionStep } from "@/components/features/setup/ConnectionStep";
-
+import { autoDetectSetup } from "@/hooks/useSetupLogic";
 export default function SetupPage({ onComplete }) {
   const [setupData, setSetupData] = useState({
     micDeviceId: null,
@@ -21,6 +22,7 @@ export default function SetupPage({ onComplete }) {
 
   const [availableHardware, setAvailableHardware] = useState({ mic: true, cam: true });
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [isSkipping, setIsSkipping] = useState(false);
 
   const updateSetupData = (key, value) => setSetupData((prev) => ({ ...prev, [key]: value }));
 
@@ -46,14 +48,28 @@ export default function SetupPage({ onComplete }) {
     handleNext();
   };
 
+  // ✨ THE FIX: Smart Skip Handler
+  const handleSkip = async () => {
+    setIsSkipping(true);
+    const optimizedData = await autoDetectSetup(setupData);
+    setSetupData(optimizedData);
+    onComplete(optimizedData);
+    setIsSkipping(false);
+  };
+
   const isWideStep = currentStep.id === "optical" || currentStep.id === "thermal";
 
   return (
     <div className="h-full flex flex-col bg-background text-foreground overflow-hidden pt-6">
       <header className="w-full p-4 md:px-8 flex justify-between items-center border-b shrink-0">
         <h1 className="text-lg font-bold tracking-tight">System Calibration</h1>
-        <Button variant="ghost" size="sm" onClick={() => onComplete(setupData)}>
-          Skip Setup
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleSkip} 
+          disabled={isSkipping}
+        >
+          {isSkipping ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Auto-Configuring...</> : "Skip Setup"}
         </Button>
       </header>
 

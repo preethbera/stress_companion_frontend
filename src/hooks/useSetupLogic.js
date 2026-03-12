@@ -3,6 +3,82 @@ import { useFaceDetection } from "@/hooks/useFaceDetection";
 import { API_ENDPOINTS } from "@/config/api";
 
 // ============================================================================
+// AUTO-CONFIGURATION UTILITY
+// ============================================================================
+export const autoDetectSetup = async (currentSetupData) => {
+  try {
+    // 1. Force hardware awake so we can read device labels
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      stream.getTracks().forEach(t => t.stop());
+    } catch (e) {
+      console.warn("Permissions not fully granted during auto-skip");
+    }
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    
+    // Filter out virtual/default endpoints
+    const mics = devices.filter(d => d.kind === "audioinput" && d.deviceId !== "default" && d.deviceId !== "communications");
+    const cams = devices.filter(d => d.kind === "videoinput" && d.deviceId);
+
+    let autoData = { ...currentSetupData };
+
+    // 2. Auto-select Mic
+    if (mics.length > 0 && !autoData.micDeviceId) {
+      autoData.micDeviceId = mics[0].deviceId;
+    }
+
+    // 3. Auto-select Cameras
+    if (cams.length === 0) {
+      // Edge Case: No cameras
+      autoData.optOutOptical = true;
+      autoData.optOutThermal = true;
+    } else if (cams.length === 1) {
+      // Edge Case: 1 camera
+      const isThermal = /thermal|flir|infiray|seek|mlx/i.test(cams[0].label);
+      if (isThermal) {
+         autoData.thermalDeviceId = cams[0].deviceId;
+         autoData.optOutThermal = false;
+         autoData.optOutOptical = true;
+      } else {
+         autoData.opticalDeviceId = cams[0].deviceId;
+         autoData.optOutOptical = false;
+         autoData.optOutThermal = true; // Block thermal since Optical took the only camera
+      }
+    } else {
+      // Edge Case: 2 or more cameras
+      const thermalRegex = /thermal|flir|infiray|seek|mlx/i;
+      const thermalCam = cams.find(c => thermalRegex.test(c.label));
+
+      if (thermalCam) {
+        // We found a specific thermal camera!
+        autoData.thermalDeviceId = thermalCam.deviceId;
+        autoData.optOutThermal = false;
+        
+        // Pick the first camera that isn't the thermal one for Optical
+        const opticalCam = cams.find(c => c.deviceId !== thermalCam.deviceId);
+        if (opticalCam) {
+          autoData.opticalDeviceId = opticalCam.deviceId;
+          autoData.optOutOptical = false;
+        }
+      } else {
+        // No obvious thermal camera found by name. Assign sequentially.
+        autoData.opticalDeviceId = cams[0].deviceId;
+        autoData.optOutOptical = false;
+        autoData.thermalDeviceId = cams[1].deviceId;
+        autoData.optOutThermal = false;
+      }
+    }
+
+    return autoData;
+  } catch (err) {
+    if (import.meta.env.DEV) console.error("Auto-detect failed:", err);
+    return currentSetupData; // Fallback safely
+  }
+};
+
+
+// ============================================================================
 // 1. HARDWARE PERMISSION CHECKER
 // ============================================================================
 export function usePermissionCheck() {

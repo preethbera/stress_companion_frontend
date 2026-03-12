@@ -10,7 +10,6 @@ export default function StressSessionManager({ user, onLogout }) {
   const [sessionConfig, setSessionConfig] = useState(null);
 
   if (!sessionConfig) {
-    // Wrap Setup in Layout so the header/sidebar still shows up!
     return (
       <Layout user={user} onLogout={onLogout}>
         <SetupPage onComplete={(data) => setSessionConfig(data)} />
