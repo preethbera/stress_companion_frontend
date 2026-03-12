@@ -2,36 +2,24 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { TRACKER_CONFIG } from "@/config/constants";
 
-/**
- * Helper: Normalizes differences between <video> and <img> elements
- */
-const getMediaMetadata = (el) => {
-  if (!el) return { width: 0, height: 0, isReady: false };
+// --- HELPER MATH FUNCTIONS FOR FACE LOCKING ---
+const getCenter = (box) => ({
+  x: box.originX + box.width / 2,
+  y: box.originY + box.height / 2
+});
 
-  if (el.tagName === "VIDEO") {
-    return {
-      width: el.videoWidth,
-      height: el.videoHeight,
-      isReady: el.readyState >= 2, // HAVE_CURRENT_DATA
-    };
-  } 
-  
-  if (el.tagName === "IMG") {
-    return {
-      width: el.naturalWidth,
-      height: el.naturalHeight,
-      isReady: el.complete && el.naturalWidth > 0,
-    };
-  }
-
-  return { width: 0, height: 0, isReady: false };
+const getDistance = (center1, center2) => {
+  return Math.sqrt(Math.pow(center1.x - center2.x, 2) + Math.pow(center1.y - center2.y, 2));
 };
 
-// ADDED: fps parameter (Defaults to 5 if not provided)
-export function useFaceTracker(mediaRef, detector, isActive, onFrameBlob, fps = 5) {
+const getArea = (box) => box.width * box.height;
+
+export function useFaceTracker(videoRef, detector, isActive, onFrameBlob, fps = 5) {
   const overlayRef = useRef(null);
   const cropCanvasRef = useRef(null);
   const requestRef = useRef(null);
+  
+  // Stores the exact box of the face we are currently "locked" onto
   const latestDetectionRef = useRef(null);
   
   const lastAlertTimeRef = useRef(0);
@@ -45,57 +33,94 @@ export function useFaceTracker(mediaRef, detector, isActive, onFrameBlob, fps = 
     }
   };
 
-  // --- 1. Visual Detection Loop ---
+  const drawBox = (ctx, box, color) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(box.originX, box.originY, box.width, box.height);
+  };
+
+  // --- 1. VISUAL DETECTION & FACE LOCKING LOOP ---
   useEffect(() => {
-    // We check mediaRef.current, not just mediaRef
-    if (!isActive || !mediaRef.current || !detector) return;
+    if (!isActive || !videoRef.current || !detector) return;
     
-    // Reset warmup on activation
     isWarmupRef.current = true;
     const warmupTimer = setTimeout(() => isWarmupRef.current = false, 3000);
 
     const detect = () => {
-      const mediaEl = mediaRef.current;
+      const videoEl = videoRef.current;
       const overlay = overlayRef.current;
 
-      // Safety check using our helper
-      const { width, height, isReady } = getMediaMetadata(mediaEl);
-
-      if (!mediaEl || !detector || !overlay || !isReady) {
+      // Ensure it's a video and actually playing
+      if (!videoEl || videoEl.readyState < 2 || !detector || !overlay) {
         requestRef.current = requestAnimationFrame(detect);
         return;
       }
 
-      // Detect
       try {
-        const startTime = performance.now();
-        const result = detector.detectForVideo(mediaEl, startTime);
+        const result = detector.detectForVideo(videoEl, performance.now());
         const detections = result.detections;
         
-        // Update Overlay dimensions
-        if (overlay.width !== width || overlay.height !== height) {
-           overlay.width = width;
-           overlay.height = height;
+        // Sync canvas to video dimensions
+        if (overlay.width !== videoEl.videoWidth || overlay.height !== videoEl.videoHeight) {
+           overlay.width = videoEl.videoWidth;
+           overlay.height = videoEl.videoHeight;
         }
   
         const ctx = overlay.getContext("2d");
         ctx.clearRect(0, 0, overlay.width, overlay.height);
   
-        if (detections.length > 1) {
+        // SCENARIO A: No Face
+        if (detections.length === 0) {
           latestDetectionRef.current = null;
-          triggerAlert("Multiple faces", "Ensure only one person is visible.");
-          detections.forEach(d => drawBox(ctx, d.boundingBox, TRACKER_CONFIG.BOX_COLOR_ERROR));
-        } else if (detections.length === 0) {
-          latestDetectionRef.current = null;
-          // Optional: You might want to disable "No face" alerts for Thermal 
-          // if detection is spotty.
           triggerAlert("No face detected", "Please align your face.");
-        } else {
+        } 
+        
+        // SCENARIO B: Exactly One Face
+        else if (detections.length === 1) {
           latestDetectionRef.current = detections[0];
           drawBox(ctx, detections[0].boundingBox, TRACKER_CONFIG.BOX_COLOR_OK);
+        } 
+        
+        // SCENARIO C: Multiple Faces (The Lock-On Logic)
+        else {
+          let targetFace = detections[0];
+          
+          if (latestDetectionRef.current) {
+            // Find the face closest to the one we were tracking a millisecond ago
+            const prevCenter = getCenter(latestDetectionRef.current.boundingBox);
+            let minDistance = Infinity;
+            
+            detections.forEach(d => {
+              const center = getCenter(d.boundingBox);
+              const dist = getDistance(prevCenter, center);
+              if (dist < minDistance) {
+                minDistance = dist;
+                targetFace = d;
+              }
+            });
+          } else {
+            // If we just booted up and see multiple faces, lock onto the biggest one
+            let maxArea = 0;
+            detections.forEach(d => {
+              const area = getArea(d.boundingBox);
+              if (area > maxArea) {
+                maxArea = area;
+                targetFace = d;
+              }
+            });
+          }
+          
+          latestDetectionRef.current = targetFace;
+          triggerAlert("Multiple faces", "Tracking the closest/largest face.");
+
+          // Draw the locked face in Green, the intruders in Red
+          detections.forEach(d => {
+            const isTarget = d === targetFace;
+            drawBox(ctx, d.boundingBox, isTarget ? TRACKER_CONFIG.BOX_COLOR_OK : TRACKER_CONFIG.BOX_COLOR_ERROR);
+          });
         }
       } catch (err) {
-        console.warn("Detection failed:", err);
+        if (import.meta.env.DEV) console.warn("Detection failed:", err);
       }
       
       requestRef.current = requestAnimationFrame(detect);
@@ -107,19 +132,26 @@ export function useFaceTracker(mediaRef, detector, isActive, onFrameBlob, fps = 
       cancelAnimationFrame(requestRef.current);
       clearTimeout(warmupTimer);
     };
-  }, [isActive, detector, mediaRef]);
+  }, [isActive, detector, videoRef]);
 
-  // --- 2. Data Export Loop ---
+  // --- 2. DATA EXPORT LOOP ---
   useEffect(() => {
     if (!isActive) return;
 
     const processFrame = () => {
       const detection = latestDetectionRef.current;
-      const mediaEl = mediaRef.current;
+      const videoEl = videoRef.current;
       
-      if (!detection || !mediaEl || !cropCanvasRef.current) return;
+      // If we don't have a video or canvas, abort.
+      if (!videoEl || !cropCanvasRef.current) return;
 
-      const { width, height } = getMediaMetadata(mediaEl);
+      // SCENARIO A: Tell the backend we lost the face!
+      if (!detection) {
+        if (onFrameBlob) onFrameBlob(null, "NO_FACE");
+        return;
+      }
+
+      // SCENARIO B: Crop and send the locked face
       const { boundingBox } = detection;
       const ctx = cropCanvasRef.current.getContext("2d");
 
@@ -128,41 +160,30 @@ export function useFaceTracker(mediaRef, detector, isActive, onFrameBlob, fps = 
         cropCanvasRef.current.height = TRACKER_CONFIG.TARGET_SIZE;
       }
 
-      // Calculate Crop
       const paddingX = boundingBox.width * TRACKER_CONFIG.FACE_PADDING_PERCENT;
       const paddingY = boundingBox.height * TRACKER_CONFIG.FACE_PADDING_PERCENT;
       
-      // Ensure we don't crop outside the image bounds
       const x = Math.max(0, boundingBox.originX - paddingX);
       const y = Math.max(0, boundingBox.originY - paddingY);
-      const w = Math.min(width - x, boundingBox.width + (paddingX * 2));
-      const h = Math.min(height - y, boundingBox.height + (paddingY * 2));
+      const w = Math.min(videoEl.videoWidth - x, boundingBox.width + (paddingX * 2));
+      const h = Math.min(videoEl.videoHeight - y, boundingBox.height + (paddingY * 2));
 
-      // Draw & Convert
-      ctx.drawImage(mediaEl, x, y, w, h, 0, 0, TRACKER_CONFIG.TARGET_SIZE, TRACKER_CONFIG.TARGET_SIZE);
+      ctx.drawImage(videoEl, x, y, w, h, 0, 0, TRACKER_CONFIG.TARGET_SIZE, TRACKER_CONFIG.TARGET_SIZE);
 
       if (onFrameBlob) {
         cropCanvasRef.current.toBlob(
-          (blob) => { if (blob) onFrameBlob(blob); },
+          (blob) => { if (blob) onFrameBlob(blob, "FACE_DETECTED"); },
           "image/jpeg",
           0.8
         );
       }
     };
 
-    // MODIFIED: Calculate interval based on FPS
-    // If fps is 5, interval is 200ms
     const intervalTime = 1000 / fps;
     const interval = setInterval(processFrame, intervalTime);
     
     return () => clearInterval(interval);
-  }, [isActive, mediaRef, onFrameBlob, fps]); // Added fps to dependencies
-
-  const drawBox = (ctx, box, color) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    ctx.strokeRect(box.originX, box.originY, box.width, box.height);
-  };
+  }, [isActive, videoRef, onFrameBlob, fps]);
 
   return { overlayRef, cropCanvasRef };
 }
