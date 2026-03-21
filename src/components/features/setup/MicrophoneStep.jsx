@@ -1,14 +1,16 @@
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mic, CheckCircle2 } from "lucide-react";
-import { useMicrophoneSetup } from "@/hooks/useSetupLogic"; 
+import { useMicrophoneStep } from "@/hooks/setup/useMicrophoneStep"; 
+import { useSessionStore } from "@/store/useSessionStore";
 import { StepLayout, StepHeader, StepFooter } from "./SharedComponents";
 
-export function MicrophoneStep({ setupData, updateSetupData, onNext, onBack }) {
-  // Logic, state, and side effects are completely abstracted
-  const { audioInputs, volume, hasSpoken } = useMicrophoneSetup(setupData, updateSetupData);
+export function MicrophoneStep({ onNext, onBack }) {
+  const micDeviceId = useSessionStore((state) => state.hardwareConfig.micDeviceId);
+  const setHardwareConfig = useSessionStore((state) => state.setHardwareConfig);
 
-  // UI helpers remain in the view
+  const { audioInputs, volume, hasSpoken } = useMicrophoneStep();
+
   const getBarHeight = (baseHeight, volumeFactor) => {
     const scaledVolume = (volume / 255) * volumeFactor;
     return `${Math.min(100, baseHeight + scaledVolume)}%`;
@@ -47,7 +49,7 @@ export function MicrophoneStep({ setupData, updateSetupData, onNext, onBack }) {
         </div>
 
         <div className="w-full space-y-2">
-           <Select value={setupData.micDeviceId || ""} onValueChange={(val) => updateSetupData("micDeviceId", val)}>
+           <Select value={micDeviceId || ""} onValueChange={(val) => setHardwareConfig({ micDeviceId: val })}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select Microphone" />
             </SelectTrigger>
@@ -64,7 +66,7 @@ export function MicrophoneStep({ setupData, updateSetupData, onNext, onBack }) {
       <StepFooter 
         onBack={onBack} 
         onNext={onNext} 
-        nextDisabled={!setupData.micDeviceId}
+        nextDisabled={!micDeviceId}
         nextLabel={hasSpoken ? "Audio Sounds Good" : "Skip Audio Check"}
       />
     </StepLayout>

@@ -1,192 +1,146 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import ChatLayout from "@/components/features/chat/ChatLayout";
 import { Navbar } from "@/components/layout/Navbar";
 import { Toaster } from "@/components/ui/sonner";
-import { CameraOff } from "lucide-react"; 
+import { toast } from "sonner";
 
-// Components
 import VoicePanel from "@/components/features/chat/VoicePanel";
 import { ConversationPanel } from "@/components/features/chat/ConversationPanel";
-import { CameraStack } from "@/components/features/chat/CameraStack"; 
-import { CameraFeed } from "@/components/features/chat/CameraFeed";
+import { CameraStack } from "@/components/features/chat/CameraStack";
 
-// Hooks
+// The Decoupled Hooks
 import { useChatSession } from "@/hooks/useChatSession";
+import { useVisionPipeline } from "@/hooks/useVisionPipeline";
 
-/**
- * HIDDEN LOGIC UNIT
- * Keeps the "Master" DOM elements alive for the AI Trackers.
- */
-function HiddenCameraUnit({ 
-  opticalRef, opticalCanvasRef, opticalStream,
-  thermalRef, thermalCanvasRef, thermalStream
-}) {
-  // even if they mount a few milliseconds late. This stops the tracker from freezing.
-  useEffect(() => {
-    if (opticalRef?.current && opticalStream) {
-      opticalRef.current.srcObject = opticalStream;
+import { CAMERA_CONFIG } from "@/config/constants";
+
+export default function ChatPage({ user, onLogout }) {
+  const navigate = useNavigate();
+
+  // 2. Data Storage for Report Generation
+  const stressTimelineRef = useRef([]);
+  const thermalTimelineRef = useRef([]);
+
+  // 3. Audio / Conversational Agent Engine
+  const chatProps = useChatSession();
+
+  // 4. Vision Engine Data Handlers
+  const handleOpticalData = useCallback((data) => {
+    if (data?.stress_probability !== undefined) {
+      toast.dismiss("vision-warning"); // Clear the warning when face returns
+      stressTimelineRef.current.push({
+        timestamp: Date.now(),
+        score: Math.round(data.stress_probability * 100),
+        status: "FACE_DETECTED",
+      });
+    } else if (data?.status === "NO_FACE") {
+      toast.error("Face not detected. Please look at the camera.", { id: "vision-warning", duration: 3000 });
+      stressTimelineRef.current.push({
+        timestamp: Date.now(),
+        score: null,
+        status: "NO_FACE",
+      });
+    } else if (data?.status === "MULTIPLE_FACES") {
+      toast.error("Multiple faces detected. Please ensure only you are in the frame.", { id: "vision-warning", duration: 3000 });
+      stressTimelineRef.current.push({
+        timestamp: Date.now(),
+        score: null,
+        status: "NO_FACE", // Log as a gap in the timeline
+      });
     }
-  }, [opticalStream, opticalRef]);
+  }, []);
 
-  useEffect(() => {
-    if (thermalRef?.current && thermalStream) {
-      thermalRef.current.srcObject = thermalStream;
+  const handleThermalData = useCallback((data) => {
+    if (data?.stress_probability !== undefined) {
+      toast.dismiss("vision-warning"); // Clear the warning when face returns
+      thermalTimelineRef.current.push({
+        timestamp: Date.now(),
+        prob: data.stress_probability,
+        isStressed: data.stress_probability > 0.5,
+        status: "FACE_DETECTED",
+      });
+    } else if (data?.status === "NO_FACE") {
+      thermalTimelineRef.current.push({
+        timestamp: Date.now(),
+        prob: null,
+        status: "NO_FACE",
+      });
+    } else if (data?.status === "MULTIPLE_FACES") {
+      thermalTimelineRef.current.push({
+        timestamp: Date.now(),
+        prob: null,
+        status: "NO_FACE", // Log as a gap in the timeline
+      });
     }
-  }, [thermalStream, thermalRef]);
+  }, []);
 
-  return (
-    <div className="fixed top-0 left-0 pointer-events-none overflow-hidden opacity-0 w-10 h-10 z-[-10]">
-      <video 
-        ref={opticalRef} 
-        autoPlay playsInline muted 
-        onLoadedMetadata={(e) => e.target.play().catch(() => {})} 
-        className="w-full h-full" 
-      />
-      <canvas ref={opticalCanvasRef} />
-      <video 
-        ref={thermalRef} 
-        autoPlay playsInline muted 
-        onLoadedMetadata={(e) => e.target.play().catch(() => {})} 
-        className="w-full h-full" 
-      />
-      <canvas ref={thermalCanvasRef} />
-    </div>
-  );
-}
+  useVisionPipeline({
+    cameraId: "optical", // The logical UI slot
+    endpointName: "optical",
+    onDataReceived: handleOpticalData,
+    targetFps: CAMERA_CONFIG.OPTICAL_FPS_RATE,
+  });
 
-export default function ChatPage({ user, onLogout, setupData }) {
-  const [isOpticalCamOpen, setIsOpticalCamOpen] = useState(false);
-  const [isThermalCamOpen, setIsThermalCamOpen] = useState(false);
-  const [showTranscript, setShowTranscript] = useState(true);
+  useVisionPipeline({
+    cameraId: "thermal",
+    endpointName: "thermal",
+    onDataReceived: handleThermalData,
+    targetFps: CAMERA_CONFIG.THERMAL_FPS_RATE,
+  });
 
-  const {
-    messages, input, setInput,
-    aiState, hasStarted,
-    isMicOn, isSpeaking, isGeminiLoading,
-    cameraProps, thermalProps,
-    handleStartSession, handleSendMessage, toggleMic, handleStop,
-  } = useChatSession(setupData);
+  const handleStopSession = () => {
+    // Collect timelines from refs before halting
+    const finalOpticalData = stressTimelineRef.current;
+    const finalThermalData = thermalTimelineRef.current;
 
-  const toggleCamera = () => {
-    const isAnyOpen = isOpticalCamOpen || isThermalCamOpen;
-    if (isAnyOpen) {
-      setIsOpticalCamOpen(false);
-      setIsThermalCamOpen(false);
-    } else {
-      setIsOpticalCamOpen(true);
-      setIsThermalCamOpen(true);
+    // Clear any lingering vision toasts on exit
+    toast.dismiss("vision-warning");
+
+    if (finalOpticalData.length > 0 || finalThermalData.length > 0) {
+      sessionStorage.setItem(
+        "lastSessionData",
+        JSON.stringify({
+          optical: finalOpticalData,
+          thermal: finalThermalData,
+          timestamp: Date.now(),
+        }),
+      );
     }
+    chatProps.handleStop();
+    navigate("/report");
   };
-
-  const toggleTranscript = () => setShowTranscript((prev) => !prev);
-
-  const renderDisabledCamera = (label) => (
-    <div className="flex flex-col items-center justify-center h-full w-full bg-card rounded-xl border border-dashed border-border text-muted-foreground p-6">
-      <CameraOff className="h-10 w-10 mb-3 opacity-40" />
-      <p className="font-medium text-sm">{label}</p>
-    </div>
-  );
-
-  const cameraSlot = (
-    <CameraStack
-      isOpticalOpen={isOpticalCamOpen}
-      isThermalOpen={isThermalCamOpen}
-      onCloseOptical={() => setIsOpticalCamOpen(false)}
-      onCloseThermal={() => setIsThermalCamOpen(false)}
-       
-      // This stops the "Live" badge from showing up on skipped cameras.
-      isOpticalFeedLoading={cameraProps.isOptedOut ? false : cameraProps.isLoading}
-      isOpticalFeedConnected={cameraProps.isOptedOut ? false : cameraProps.isConnected}
-      
-      isThermalFeedLoading={thermalProps.isOptedOut ? false : thermalProps.isLoading}
-      isThermalFeedConnected={thermalProps.isOptedOut ? false : thermalProps.isConnected}
-      
-      opticalFeedSlot={
-        cameraProps.isOptedOut ? (
-          renderDisabledCamera("Optical Camera Not Used")
-        ) : (
-          <CameraFeed
-            title="Optical Camera"
-            stream={cameraProps.stream} 
-            overlayRef={cameraProps.overlayRef} 
-            isActive={!cameraProps.isOptedOut}
-            isLoading={cameraProps.isLoading}
-            error={cameraProps.error}
-          />
-        )
-      }
-      thermalFeedSlot={
-        thermalProps.isOptedOut ? (
-          renderDisabledCamera("Thermal Camera Not Used")
-        ) : (
-          <CameraFeed
-            title="Thermal Camera"
-            stream={thermalProps.stream} 
-            overlayRef={thermalProps.overlayRef}
-            isActive={!thermalProps.isOptedOut}
-            isLoading={thermalProps.isLoading}
-            error={thermalProps.error}
-          />
-        )
-      }
-    />
-  );
-
-  const voiceSlot = (
-    <VoicePanel
-      hasStarted={hasStarted}
-      aiState={aiState}
-      isMicOn={isMicOn}
-      isGeminiLoading={isGeminiLoading}
-      isSpeaking={isSpeaking}
-      isChatOpen={showTranscript} 
-      isCameraActive={isOpticalCamOpen || isThermalCamOpen} 
-      onStart={handleStartSession}
-      onStop={handleStop}
-      onToggleMic={toggleMic}
-      onToggleChat={toggleTranscript} 
-      onToggleCamera={toggleCamera} 
-    />
-  );
-
-  const transcriptSlot = (
-    <ConversationPanel
-      messages={messages}
-      input={input}
-      setInput={setInput}
-      onSendMessage={handleSendMessage}
-      hasStarted={hasStarted}
-    />
-  );
 
   return (
     <>
-      {hasStarted && (
-        <HiddenCameraUnit 
-          opticalRef={cameraProps.masterVideoRef} 
-          opticalCanvasRef={cameraProps.cropCanvasRef} 
-          opticalStream={cameraProps.stream} 
-          thermalRef={thermalProps.masterVideoRef}
-          thermalCanvasRef={thermalProps.cropCanvasRef}
-          thermalStream={thermalProps.stream}
-        />
-      )}
-
       <div className="flex flex-col h-screen w-full bg-background">
         <Navbar user={user} onLogout={onLogout} />
         <main className="flex-1 overflow-hidden border-t w-full">
           <ChatLayout
-            showCameraPanel={isOpticalCamOpen || isThermalCamOpen}
-            showTranscriptPanel={showTranscript}
-            cameraSlot={cameraSlot}
-            voiceSlot={voiceSlot}
-            transcriptSlot={transcriptSlot}
+            cameraSlot={<CameraStack />}
+            voiceSlot={
+              <VoicePanel
+                aiState={chatProps.aiState}
+                isMicOn={chatProps.isMicOn}
+                isUserSpeaking={chatProps.isUserSpeaking}
+                onStop={handleStopSession}
+                onToggleMic={chatProps.toggleMic}
+              />
+            }
+            transcriptSlot={
+              <ConversationPanel
+                messages={chatProps.messages}
+                input={chatProps.input}
+                setInput={chatProps.setInput}
+                onSendMessage={chatProps.handleSendMessage}
+              />
+            }
           />
         </main>
       </div>
-      <Toaster />
+      <Toaster position="top-center"/>
     </>
   );
 }

@@ -6,13 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+import { useSessionStore } from "@/store/useSessionStore";
+
 export function ConversationPanel({
   messages,
   input,
   setInput,
   onSendMessage,
-  hasStarted,
 }) {
+
+  const hasStarted = useSessionStore((state) => state.conversationStatus === 'started');
+
   const scrollEndRef = useRef(null);
   const inputRef = useRef(null);
 

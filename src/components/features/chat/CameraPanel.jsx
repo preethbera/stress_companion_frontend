@@ -1,0 +1,81 @@
+import React from "react";
+import { X, WifiOff, Loader2, Circle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { CameraFeed } from "./CameraFeed";
+
+// Import your stores
+import { useUIStore } from "@/store/useUIStore";
+import { useVisionStore } from "@/store/useVisionStore";
+
+export function CameraPanel({
+  title,
+  icon: Icon,
+  iconColorClass,
+  cameraId,
+}) {
+
+  const connectionStatus = useVisionStore((state) => state[cameraId].connectionStatus);
+  const toggleOptical = useUIStore((state) => state.toggleOptical);
+  const toggleThermal = useUIStore((state) => state.toggleThermal);
+
+  const handleClose = () => {
+    if (cameraId === "optical") toggleOptical();
+    if (cameraId === "thermal") toggleThermal();
+  };
+
+
+  // Map the status directly to Shadcn variants and Lucide icons
+  const badgeConfig = {
+    connected: {
+      label: "Live",
+      variant: "outline",
+      icon: <Circle className="h-3 w-3 fill-green-500 text-green-500" />,
+    },
+    connecting: {
+      label: "Connecting...",
+      variant: "secondary",
+      icon: <Loader2 className="h-3 w-3 animate-spin" />,
+    },
+    disconnected: {
+      label: "Offline",
+      variant: "destructive",
+      icon: <WifiOff className="h-3 w-3" />,
+    },
+  };
+
+  const currentStatus =
+    badgeConfig[connectionStatus] || badgeConfig["disconnected"];
+
+  return (
+    <div className="relative flex flex-col flex-1 min-h-0 bg-background transition-all border-b border-border">
+      <div className="flex items-center justify-between px-3 h-12 border-b border-border bg-card/50 select-none">
+        <div className="flex items-center gap-2.5">
+          <Icon className={cn("h-4 w-4", iconColorClass)} />
+          <span className="text-sm font-medium text-foreground">{title}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Inline Badge - No extra wrapper component needed */}
+          <Badge
+            variant={currentStatus.variant}
+            className="flex items-center gap-1.5 w-fit"
+          >
+            {currentStatus.icon}
+            <span>{currentStatus.label}</span>
+          </Badge>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
+            onClick={handleClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      <CameraFeed cameraId={cameraId} />
+    </div>
+  );
+}

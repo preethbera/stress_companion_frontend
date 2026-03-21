@@ -1,14 +1,17 @@
 import React from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Server, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
-import { useBackendHealth } from "@/hooks/useSetupLogic";
+import { useBackendHealth } from "@/hooks/setup/useBackendHealth";
 import { StepLayout, StepHeader, StepFooter } from "./SharedComponents";
+import { useSessionStore } from "../../../store/useSessionStore";
 
-export function ConnectionStep({ setupData, onBack, onComplete }) {
+export function ConnectionStep({ onBack, onComplete }) {
   // Logic is completely abstracted into the hook
   const { isConnecting, backendError } = useBackendHealth();
+
+  const hardwareConfig = useSessionStore((state) => state.hardwareConfig);
   
-  const hasOptOuts = setupData.optOutOptical || setupData.optOutThermal;
+  const hasOptOuts = hardwareConfig.optOutOptical || hardwareConfig.optOutThermal;
 
   return (
     <StepLayout>
