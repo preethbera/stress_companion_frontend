@@ -1,12 +1,24 @@
-import React, { useRef, useEffect } from "react";
-import { Send, User, Sparkles, ScrollText } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-
+import React from "react";
+import { ScrollText, MessageSquare } from "lucide-react";
 import { useSessionStore } from "@/store/useSessionStore";
+
+// AI Elements Imports
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
+import {
+  PromptInput,
+  PromptInputTextarea,
+  PromptInputSubmit,
+} from "@/components/ai-elements/prompt-input";
 
 export function ConversationPanel({
   messages,
@@ -14,150 +26,66 @@ export function ConversationPanel({
   setInput,
   onSendMessage,
 }) {
+  const hasStarted = useSessionStore(
+    (state) => state.conversationStatus === "started",
+  );
 
-  const hasStarted = useSessionStore((state) => state.conversationStatus === 'started');
-
-  const scrollEndRef = useRef(null);
-  const inputRef = useRef(null);
-
-  // Optimization: Only auto-scroll if messages change
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      scrollEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    });
-  }, [messages]);
-
-  // Optimization: Auto-scroll input text to the right for long queries
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.scrollLeft = inputRef.current.scrollWidth;
-    }
-  }, [input]);
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (input.trim() && hasStarted) {
-        onSendMessage();
-      }
+  const handleSubmit = () => {
+    // The PromptInput handles the preventDefault internally
+    if (input.trim() && hasStarted) {
+      onSendMessage();
     }
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-card overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-background overflow-hidden">
       {/* 1. HEADER */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-b bg-muted/20 px-6">
-        <div className="flex items-center gap-3">
-          <ScrollText className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold tracking-tight">
-            Session Transcript
-          </h2>
-        </div>
+      <div className="flex shrink-0 items-center px-6 py-4 gap-3 border-b bg-muted/20">
+        <ScrollText className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-semibold tracking-tight">
+          Session Transcript
+        </h2>
       </div>
 
-      {/* 2. MESSAGES AREA (Scrollable) */}
-      <ScrollArea className="flex-1 h-full min-h-0">
-        {/* Empty State */}
-        {!hasStarted && messages.length === 0 ? (
-          <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
-            <p className="text-muted-foreground text-sm">
-              Click on the{" "}
-              <span className="font-semibold text-primary">
-                Start Conversation
-              </span>{" "}
-              button to start...
-            </p>
-          </div>
-        ) : (
-          /* Messages List */
-          <div className="flex flex-col gap-6 py-4 px-4">
-            {messages.map((msg, index) => (
-              <div
-                key={msg.id || index}
-                className={cn(
-                  "flex gap-3 w-full animate-in fade-in slide-in-from-bottom-2 duration-300",
-                  msg.role === "user" ? "flex-row-reverse" : "flex-row"
-                )}
-              >
-                {/* User/Bot Icon */}
-                <Avatar className="h-8 w-8 shrink-0 border shadow-sm">
-                  <AvatarFallback
-                    className={cn(
-                      "text-xs font-medium",
-                      msg.role === "assistant"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {msg.role === "user" ? (
-                      <User className="h-4 w-4" />
-                    ) : (
-                      <Sparkles className="h-4 w-4" />
-                    )}
-                  </AvatarFallback>
-                </Avatar>
+      {/* 2. CONVERSATION & INPUT AREA */}
+      <div className="flex-1 flex flex-col min-h-0 relative">
+        <Conversation>
+          <ConversationContent>
+            {!hasStarted && messages.length === 0 ? (
+              <ConversationEmptyState
+                icon={<MessageSquare className="size-12" />}
+                title="Start a conversation"
+                description="Click on the Start Conversation button to begin chatting..."
+              />
+            ) : (
+              messages.map((msg, index) => (
+                <Message from={msg.role} key={msg.id || index}>
+                  <MessageContent>
+                    <MessageResponse>{msg.content}</MessageResponse>
+                  </MessageContent>
+                </Message>
+              ))
+            )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
 
-                {/* Message Bubble */}
-                <div
-                  className={cn(
-                    "flex flex-col max-w-[85%]",
-                    msg.role === "user" ? "items-end" : "items-start"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "px-4 py-2.5 text-sm shadow-sm break-words whitespace-pre-wrap",
-                      msg.role === "user"
-                        ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
-                        : "bg-muted/50 border text-foreground rounded-2xl rounded-tl-sm"
-                    )}
-                  >
-                    {msg.content}
-                  </div>
-                </div>
-              </div>
-            ))}
-            {/* Invisible div to anchor scroll to bottom */}
-            <div ref={scrollEndRef} />
-          </div>
-        )}
-      </ScrollArea>
-
-      {/* 3. INPUT FOOTER - UPDATED */}
-      <div className="p-4 bg-background border-t shrink-0">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSendMessage();
-          }}
-          className="relative flex items-center"
-        >
-          <Input
-            ref={inputRef}
+        {/* 3. PROMPT INPUT FOOTER */}
+        <PromptInput onSubmit={handleSubmit} className="p-3 w-full relative">
+          <PromptInputTextarea
+            value={input}
             placeholder={
               hasStarted ? "Type a message..." : "Start session first..."
             }
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onChange={(e) => setInput(e.currentTarget.value)}
             disabled={!hasStarted}
-            // Added pr-14 to prevent text from typing under the button
-            className="bg-muted/30 border-transparent focus:border-primary/20 shadow-none focus-visible:ring-0 h-12 pl-4 pr-14 rounded-xl transition-all text-foreground placeholder:text-muted-foreground"
+            className="p-3 bg-muted/30 focus-visible:ring-0"
           />
-          <Button
-            type="submit"
-            size="icon"
+          <PromptInputSubmit
             disabled={!input.trim() || !hasStarted}
-            className={cn(
-              // Changed positioning to strictly center vertically
-              "absolute right-1 top-1/2 -translate-y-1/2  size-10 rounded-lg transition-all duration-200",
-              input.trim() ? "opacity-100 scale-100" : "opacity-0 scale-90"
-            )}
-          >
-            <Send className="size-4" />
-            <span className="sr-only">Send</span>
-          </Button>
-        </form>
+            className="absolute bottom-2 right-2"
+          />
+        </PromptInput>
       </div>
     </div>
   );

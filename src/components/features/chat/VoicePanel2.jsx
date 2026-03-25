@@ -15,9 +15,10 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { RadialVisualizer } from "@/components/ui/RadialVisualizer";
+
 import { useUIStore } from "@/store/useUIStore";
 import { useSessionStore } from "@/store/useSessionStore";
+import { RadialVisualizer } from "@/components/ui/RadialVisualizer";
 
 // --- Static Data ---
 const USER_WAVE_HEIGHTS = [
@@ -33,33 +34,6 @@ const USER_WAVE_HEIGHTS = [
   "h-3",
 ];
 
-// --- Configuration for Visual States ---
-const VISUAL_STATES = {
-  idle: {
-    size: "w-44 h-44",
-    style: "bg-card border border-border shadow-md",
-    label: "Ready",
-  },
-  listening: {
-    size: "w-44 h-44",
-    style:
-      "bg-gradient-to-br from-chart-2/10 to-background border-2 border-chart-2/20 shadow-md shadow-chart-2/10",
-    label: "Listening",
-  },
-  thinking: {
-    size: "w-48 h-48",
-    style:
-      "bg-background/40 backdrop-blur-md border border-primary/20 shadow-md",
-    label: "Processing",
-  },
-  speaking: {
-    size: "w-48 h-48",
-    style:
-      "bg-gradient-to-br from-primary/10 via-primary/5 to-background border-2 border-primary/20 shadow-md shadow-primary/20",
-    label: "AI Speaking",
-  },
-};
-
 const VoicePanel = ({
   aiState = "idle",
   isMicOn = false,
@@ -67,12 +41,8 @@ const VoicePanel = ({
   onStop,
   onToggleMic,
 }) => {
-  const hasStarted = useSessionStore(
-    (state) => state.conversationStatus === "started",
-  );
-  const setConversationStatus = useSessionStore(
-    (state) => state.setConversationStatus,
-  );
+  const hasStarted = useSessionStore((state) => state.conversationStatus === 'started');
+  const setConversationStatus = useSessionStore((state) => state.setConversationStatus);
 
   const isOpticalVisible = useUIStore((state) => state.isOpticalVisible);
   const isThermalVisible = useUIStore((state) => state.isThermalVisible);
@@ -83,22 +53,20 @@ const VoicePanel = ({
   const toggleCameraPanel = useUIStore((state) => state.toggleCameraPanel);
   const toggleTranscript = useUIStore((state) => state.toggleTranscript);
 
-  const currentState = useMemo(
-    () => VISUAL_STATES[aiState] || VISUAL_STATES.idle,
-    [aiState],
-  );
-  const displayLabel =
-    isUserSpeaking && aiState === "listening"
-      ? "Hearing You..."
-      : currentState.label;
+  // Dynamic label calculation based on state
+  const displayLabel = useMemo(() => {
+    if (isUserSpeaking && aiState === "listening") return "Hearing You...";
+    switch (aiState) {
+      case "listening": return "Listening";
+      case "thinking": return "Processing";
+      case "speaking": return "AI Speaking";
+      default: return "Ready";
+    }
+  }, [aiState, isUserSpeaking]);
 
   return (
     <div className="flex flex-col w-full h-full bg-background relative overflow-hidden font-sans">
       <style>{`
-        @keyframes ai-wave { 
-          0%, 100% { height: 12%; opacity: 0.4; } 
-          50% { height: 100%; opacity: 1; } 
-        }
         @keyframes user-wave { 
           0%, 100% { height: 25%; opacity: 0.5; } 
           50% { height: 100%; opacity: 1; } 
@@ -107,6 +75,7 @@ const VoicePanel = ({
 
       {/* --- MAIN VISUAL AREA --- */}
       <div className="flex-1 relative flex items-center justify-center min-h-0">
+        
         {/* Top Right: Chat Toggle */}
         <div className="absolute top-4 right-4 z-20">
           <TooltipProvider>
@@ -118,9 +87,7 @@ const VoicePanel = ({
                   type="button"
                   onClick={toggleTranscript}
                   className="rounded-full h-10 w-10 bg-background/50 backdrop-blur-sm border-border hover:bg-background transition-colors"
-                  aria-label={
-                    isTranscriptVisible ? "Expand Visuals" : "Open Chat"
-                  }
+                  aria-label={isTranscriptVisible ? "Expand Visuals" : "Open Chat"}
                 >
                   {isTranscriptVisible ? (
                     <Maximize2 className="h-5 w-5" />
@@ -136,6 +103,10 @@ const VoicePanel = ({
           </TooltipProvider>
         </div>
 
+        {/* Ambient Glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-1/2 w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px] animate-pulse" />
+        </div>
 
         {/* --- Central Circle Visualizer --- */}
         {!hasStarted ? (
@@ -155,13 +126,23 @@ const VoicePanel = ({
             </p>
           </div>
         ) : (
-          <div className="relative flex items-center justify-center">
-            <RadialVisualizer
-              state={aiState === "idle" ? "disconnected" : aiState}
-              barCount={48}
-              radius={72}
-              className="text-primary"
-            />
+          <div className="relative z-10 flex flex-col items-center">
+            
+            {/* The Drop-in Radial Visualizer */}
+            <div className="relative flex items-center justify-center h-48 w-48">
+              <RadialVisualizer 
+                state={aiState === 'idle' ? 'disconnected' : aiState} 
+                numberOfBars={32}
+                radius={64}
+                className="text-primary" 
+              />
+            </div>
+
+            <p
+              className={`mt-10 text-xs uppercase tracking-[0.25em] font-semibold transition-colors duration-300 ${isUserSpeaking ? "text-chart-2" : "text-muted-foreground"}`}
+            >
+              {displayLabel}
+            </p>
           </div>
         )}
 
@@ -196,7 +177,7 @@ const VoicePanel = ({
       <div className="h-auto py-6 shrink-0 flex items-center gap-2 justify-center bg-background/95 backdrop-blur border-t border-border z-20 px-4">
         {!hasStarted ? (
           <Button
-            onClick={() => setConversationStatus("started")}
+            onClick={() => setConversationStatus('started')} 
             type="button"
             className="py-6 !px-8 text-xl font-bold rounded-xl shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 scale-105 transition-transform"
           >
