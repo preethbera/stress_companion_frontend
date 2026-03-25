@@ -53,7 +53,6 @@ export function ConversationPanel({
           <ConversationContent>
             {!hasStarted && messages.length === 0 ? (
               <ConversationEmptyState
-                icon={<MessageSquare className="size-12" />}
                 title="Start a conversation"
                 description="Click on the Start Conversation button to begin chatting..."
               />

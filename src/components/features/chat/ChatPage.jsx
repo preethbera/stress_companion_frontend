@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import ChatLayout from "@/components/features/chat/ChatLayout";

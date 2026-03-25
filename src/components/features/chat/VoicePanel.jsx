@@ -155,11 +155,11 @@ const VoicePanel = ({
             </p>
           </div>
         ) : (
-          <div className="relative flex items-center justify-center">
+          <div className="relative flex flex-col items-center justify-center">
             <RadialVisualizer
               state={aiState === "idle" ? "disconnected" : aiState}
-              barCount={48}
-              radius={72}
+              barCount={64}
+              radius={96}
               className="text-primary"
             />
           </div>
