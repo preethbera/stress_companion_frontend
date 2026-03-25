@@ -37,14 +37,14 @@ export default function ChatPage({ user, onLogout }) {
         status: "FACE_DETECTED",
       });
     } else if (data?.status === "NO_FACE") {
-      toast.error("Face not detected. Please look at the camera.", { id: "vision-warning", duration: 3000 });
+      toast.error("Face not detected. Please look at the camera.", { id: "vision-warning", duration: 1000 });
       stressTimelineRef.current.push({
         timestamp: Date.now(),
         score: null,
         status: "NO_FACE",
       });
     } else if (data?.status === "MULTIPLE_FACES") {
-      toast.error("Multiple faces detected. Please ensure only you are in the frame.", { id: "vision-warning", duration: 3000 });
+      toast.error("Multiple faces detected. Please ensure only you are in the frame.", { id: "vision-warning", duration: 1000 });
       stressTimelineRef.current.push({
         timestamp: Date.now(),
         score: null,
@@ -63,12 +63,14 @@ export default function ChatPage({ user, onLogout }) {
         status: "FACE_DETECTED",
       });
     } else if (data?.status === "NO_FACE") {
+      toast.error("Face not detected. Please look at the camera.", { id: "optical-vision-warning", duration: 1000 });
       thermalTimelineRef.current.push({
         timestamp: Date.now(),
         prob: null,
         status: "NO_FACE",
       });
     } else if (data?.status === "MULTIPLE_FACES") {
+      toast.error("Multiple faces detected. Please ensure only you are in the frame.", { id: "thermal-vision-warning", duration: 1000 });
       thermalTimelineRef.current.push({
         timestamp: Date.now(),
         prob: null,

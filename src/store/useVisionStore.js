@@ -8,10 +8,14 @@ const initialCameraState = {
   boundingBox: null,
 };
 
-export const useVisionStore = create((set) => ({
-  // --- STATE ---
+const initialState = {
   optical: { ...initialCameraState },
   thermal: { ...initialCameraState },
+};
+
+export const useVisionStore = create((set) => ({
+  // --- STATE ---
+  ...initialState,
 
   // --- ACTIONS ---
   
@@ -42,5 +46,8 @@ export const useVisionStore = create((set) => ({
   // 4. Teardown
   resetCamera: (cameraId) => set((state) => ({
     [cameraId]: { ...initialCameraState }
-  }))
+  })),
+
+  // Resets the store
+  resetVisionStore: () => set(initialState)
 }));

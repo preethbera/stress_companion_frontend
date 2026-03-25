@@ -1,10 +1,14 @@
 import { create } from 'zustand';
 
-export const useUIStore = create((set) => ({
-  // --- STATE ---
+const initialState = {
   isOpticalVisible: false,
   isThermalVisible: false,
   isTranscriptVisible: true,
+};
+
+export const useUIStore = create((set) => ({
+  // --- STATE ---
+  ...initialState,
 
   // --- ACTIONS ---
   toggleOptical: () => set((state) => ({ isOpticalVisible: !state.isOpticalVisible })),
@@ -18,5 +22,8 @@ export const useUIStore = create((set) => ({
       isOpticalVisible: !isAnyOpen,
       isThermalVisible: !isAnyOpen
     };
-  })
+  }),
+
+  // Resets the store
+  resetUIStore: () => set(initialState)
 }));

@@ -22,7 +22,7 @@ export function useVideoAttachment(cameraId, isActive = true, refreshTrigger = n
       });
     }
 
-    // CLEANUP: When the user closes the panel, just clear the source of this specific UI window.
+    // When the user closes the panel, just clear the source of this specific UI window.
     // The browser will NOT pause the AI's hidden video element, keeping the pipeline perfectly alive.
     return () => {
       if (videoElement) {

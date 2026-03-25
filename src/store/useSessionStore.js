@@ -1,9 +1,6 @@
 import { create } from 'zustand';
 
-export const useSessionStore = create((set) => ({
-  // --- STATE ---
-  
-  // Tracks the current phase of the user journey
+const initialState = {
   sessionStatus: 'setup', // 'setup' | 'active' | 'completed'
 
   modelStatus: 'idle', // 'idle' | 'loading' | 'ready' | 'error'
@@ -18,6 +15,11 @@ export const useSessionStore = create((set) => ({
     thermalDeviceId: null,
     optOutThermal: false,
   },
+};
+
+export const useSessionStore = create((set) => ({
+  // --- STATE ---
+  ...initialState,
 
   // --- ACTIONS ---
   
@@ -41,5 +43,8 @@ export const useSessionStore = create((set) => ({
   }),
 
   // Transitions the app to the teardown and reporting phase
-  completeSession: () => set({ sessionStatus: 'completed' })
+  completeSession: () => set({ sessionStatus: 'completed' }),
+
+  // Resets the store
+  resetSessionStore: () => set(initialState)
 }));

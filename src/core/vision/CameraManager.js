@@ -60,6 +60,9 @@ export class CameraManager {
     if (!videoTrack) return null;
 
     const settings = videoTrack.getSettings();
+    console.log(settings);
+    const ap = settings.aspectRatio || (settings.width / settings.height) || 1;
+    console.log(ap);
     
     return {
       width: settings.width || 0,
