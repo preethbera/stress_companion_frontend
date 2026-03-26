@@ -97,6 +97,7 @@ const VoicePanel = ({
         ) : (
           <RadialVisualizer
             state={aiState === "idle" ? "disconnected" : aiState}
+            text={aiState}
             barCount={64}
             radius={96}
             className="text-primary"
@@ -160,7 +161,12 @@ const VoicePanel = ({
             >
               <Camera className="size-7" />
             </Button>
-            <Button variant="outline" onClick={onStop} type="button" size="2xl">
+            <Button
+              variant="outline"
+              onClick={onStop}
+              type="button"
+              size="2xl"
+            >
               <PhoneOff className="size-6" />
             </Button>
           </ButtonGroup>

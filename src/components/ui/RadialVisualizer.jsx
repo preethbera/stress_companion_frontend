@@ -196,6 +196,7 @@ function useSimulatedVolumeBands(state, barCount) {
 
 export function RadialVisualizer({
   state = "connecting",
+  text,
   color,
   radius = 32,
   barCount = 24,
@@ -281,12 +282,12 @@ export function RadialVisualizer({
       </div>
 
       <span
-        className="absolute z-10 font-bold capitalize text-current transition-all duration-300"
+        className="absolute z-10  capitalize text-muted-foreground transition-all duration-300"
         style={{
           fontSize: `clamp(10px, ${radius * 0.25}px, 20px)`,
         }}
       >
-        {state}
+        {text}
       </span>
     </div>
   );

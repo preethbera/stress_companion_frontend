@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
 import VoicePanel from "@/components/features/chat/VoicePanel";
-import VoicePanel2 from "@/components/features/chat/VoicePanel2";
+// import VoicePanel from "@/components/features/chat/VoicePanel2";
 import { ConversationPanel } from "@/components/features/chat/ConversationPanel";
 import { CameraStack } from "@/components/features/chat/CameraStack";
 
@@ -122,7 +122,7 @@ export default function ChatPage({ user, onLogout }) {
           <ChatLayout
             cameraSlot={<CameraStack />}
             voiceSlot={
-              <VoicePanel2
+              <VoicePanel
                 aiState={chatProps.aiState}
                 isMicOn={chatProps.isMicOn}
                 isUserSpeaking={chatProps.isUserSpeaking}
