@@ -111,7 +111,7 @@ const VoicePanel = ({
             onClick={() => setConversationStatus("started")}
             type="button"
             size="2xl"
-            className="text-lg"
+            className="text-lg rounded-xl"
           >
             <Play
               className="h-6 w-6 mr-2"
@@ -124,7 +124,6 @@ const VoicePanel = ({
           <ButtonGroup>
             <Button
               onClick={onToggleMic}
-              // 1. Switch the variant dynamically based on state
               variant={isMicOn ? "destructive" : "outline"}
               type="button"
               size="2xl"
@@ -162,6 +161,7 @@ const VoicePanel = ({
               <Camera className="size-7" />
             </Button>
             <Button
+              title="End Session"
               variant="outline"
               onClick={onStop}
               type="button"

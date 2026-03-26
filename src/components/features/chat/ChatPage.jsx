@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
 import VoicePanel from "@/components/features/chat/VoicePanel";
-// import VoicePanel from "@/components/features/chat/VoicePanel2";
 import { ConversationPanel } from "@/components/features/chat/ConversationPanel";
 import { CameraStack } from "@/components/features/chat/CameraStack";
 
