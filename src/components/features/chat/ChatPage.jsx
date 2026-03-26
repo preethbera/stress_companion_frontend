@@ -122,7 +122,7 @@ export default function ChatPage({ user, onLogout }) {
           <ChatLayout
             cameraSlot={<CameraStack />}
             voiceSlot={
-              <VoicePanel
+              <VoicePanel2
                 aiState={chatProps.aiState}
                 isMicOn={chatProps.isMicOn}
                 isUserSpeaking={chatProps.isUserSpeaking}
