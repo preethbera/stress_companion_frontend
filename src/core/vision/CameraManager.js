@@ -33,6 +33,7 @@ export class CameraManager {
       video: {
         width: { ideal: width },
         height: { ideal: height },
+        aspectRatio: { ideal: 16 / 9 },
         frameRate: { ideal: frameRate },
         ...(deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "user" })
       },

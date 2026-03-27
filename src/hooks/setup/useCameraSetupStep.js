@@ -83,20 +83,25 @@ export function useCameraSetupStep(cameraType) {
     let isMounted = true;
 
     const lockTimeout = setTimeout(() => {
-      CameraManager.getStream(myDeviceId, { width: 640, height: 480 })
+      CameraManager.getStream(myDeviceId)
         .then((s) => {
           if (!isMounted) return CameraManager.stopStream(s);
           stream = s;
           
           const metadata = CameraManager.getStreamMetadata(s);
-          if (metadata && metadata.aspectRatio) {
-            setAspectRatio(metadata.aspectRatio);
+          if (metadata && metadata.width && metadata.height) {
+            setAspectRatio(metadata.width / metadata.height);
           }
 
           if (videoRef.current) {
             videoRef.current.srcObject = s;
             videoRef.current.play().catch(() => {});
-            videoRef.current.onloadedmetadata = () => setIsCameraLive(true);
+            videoRef.current.onloadedmetadata = () => {
+              setIsCameraLive(true);
+              if (videoRef.current && videoRef.current.videoWidth && videoRef.current.videoHeight) {
+                setAspectRatio(videoRef.current.videoWidth / videoRef.current.videoHeight);
+              }
+            };
           }
         }).catch(console.error);
     }, 150);

@@ -18,12 +18,15 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
   const [isUserSpeaking, setIsUserSpeaking] = useState(false); 
   const [transcript, setTranscript] = useState(""); 
   const [isAiSpeaking, setIsAiSpeaking] = useState(false); 
+  const [volume, setVolume] = useState(0);
 
   // --- Core Engine Refs ---
   const streamRef = useRef(null);
   const vadRef = useRef(null);
   const speechRef = useRef(null);
   const ttsRef = useRef(null);
+  const analyzerRef = useRef(null);
+  const animFrameRef = useRef(null);
 
   const latestCallbacks = useRef({ onResult, onInterrupt });
 
@@ -65,6 +68,8 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
       if (vadRef.current) vadRef.current.stop();
       if (speechRef.current) speechRef.current.stop();
       if (ttsRef.current) ttsRef.current.cancel();
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      if (analyzerRef.current) analyzerRef.current.stop();
       if (streamRef.current) AudioStreamer.stopStream(streamRef.current);
     };
   }, []);
@@ -84,6 +89,15 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
       await vadRef.current.start(stream);
       if (speechRef.current) speechRef.current.start(); 
 
+      analyzerRef.current = AudioStreamer.createVolumeAnalyzer(stream);
+      const updateVolume = () => {
+        if (analyzerRef.current) {
+          setVolume(analyzerRef.current.getVolume());
+          animFrameRef.current = requestAnimationFrame(updateVolume);
+        }
+      };
+      updateVolume();
+
       setIsListening(true);
     } catch (err) {
       console.error("useVoiceAgent: Failed to start audio hardware", err);
@@ -98,6 +112,15 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
     if (speechRef.current) speechRef.current.stop();
     if (ttsRef.current) ttsRef.current.cancel();
 
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    if (analyzerRef.current) {
+      analyzerRef.current.stop();
+      analyzerRef.current = null;
+    }
+
     if (streamRef.current) {
       AudioStreamer.stopStream(streamRef.current);
       streamRef.current = null;
@@ -106,6 +129,7 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
     setIsListening(false);
     setIsUserSpeaking(false);
     setIsAiSpeaking(false);
+    setVolume(0);
     setTranscript("");
   }, [isListening]);
 
@@ -129,6 +153,7 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
     isListening, 
     isUserSpeaking, 
     isAiSpeaking, 
+    volume,
     transcript, 
     startAgent, 
     stopAgent, 

@@ -116,7 +116,7 @@ export function useVisionPipeline({
         if (isMounted) {
           useVisionStore.getState().updateCameraState(cameraId, {
             cameraMetadata: metadata,
-            aspectRatio: metadata.aspectRatio || "16 / 9",
+            aspectRatio: (metadata && metadata.width && metadata.height) ? (metadata.width / metadata.height) : (16 / 9),
           });
         }
 
@@ -151,6 +151,12 @@ export function useVisionPipeline({
           if (!videoElement || videoElement.videoWidth === 0) {
             loopRef.current = setTimeout(processFrame, 200);
             return;
+          }
+
+          // Enforce dynamic aspect ratio update: prevents "default 16/9 zoom" glitch
+          const trueAspectRatio = videoElement.videoWidth / videoElement.videoHeight;
+          if (trueAspectRatio && trueAspectRatio !== useVisionStore.getState()[cameraId].aspectRatio) {
+            useVisionStore.getState().updateCameraState(cameraId, { aspectRatio: trueAspectRatio });
           }
 
           const detections = detectFacesInFrame(

@@ -23,7 +23,7 @@ import { useSessionStore } from "@/store/useSessionStore";
 const VoicePanel = ({
   aiState = "idle",
   isMicOn = false,
-  volume = 0,
+  volume = 0.6,
   onStop,
   onToggleMic,
 }) => {
@@ -105,13 +105,13 @@ const VoicePanel = ({
         )}
       </div>
 
-      <div className="col-start-2 row-start-3 justify-self-center mb-8 shadow-md">
+      <div className="col-start-2 row-start-3 justify-self-center mb-8">
         {!hasStarted && !isPreparing ? (
           <Button
             onClick={() => setSessionStatus("preparing")}
             type="button"
             size="2xl"
-            className="text-lg font-bold rounded-xl"
+            className="text-lg font-bold rounded-xl shadow-md"
           >
             <Play
               className="h-6 w-6 mr-2"
@@ -129,23 +129,28 @@ const VoicePanel = ({
               variant={isMicOn ? "destructive" : "outline"}
               type="button"
               size="2xl"
-              className="relative overflow-hidden"
+              className="relative overflow-hidden group"
             >
-              {isMicOn && (
-                <div
-                  className="absolute inset-0 bg-black/10 transition-transform duration-75 ease-linear"
-                  style={{ transform: `scale(${1 + volume})` }}
-                />
-              )}
-
-              <div
-                className="relative z-10 flex items-center justify-center transition-transform duration-75 ease-linear"
-                style={{
-                  transform: `scale(${isMicOn ? 1 + volume * 0.4 : 1})`,
-                }}
-              >
+              <div className="relative z-10 flex items-center justify-center gap-3">
                 {isMicOn ? (
-                  <Mic className="size-6" />
+                  <>
+                    <Mic className="size-6" />
+                    {/* Google Meet Style 3-Dot/Bar Equalizer */}
+                    <div className="flex items-center justify-center gap-1 h-6 ml-1">
+                      <div 
+                        className="w-[5px] bg-current rounded-full transition-all duration-75 ease-out" 
+                        style={{ height: `${Math.max(6, Math.min(20, 6 + volume * 15))}px` }} 
+                      />
+                      <div 
+                        className="w-[5px] bg-current rounded-full transition-all duration-75 ease-out" 
+                        style={{ height: `${Math.max(6, Math.min(20, 6 + volume * 24))}px` }} 
+                      />
+                      <div 
+                        className="w-[5px] bg-current rounded-full transition-all duration-75 ease-out" 
+                        style={{ height: `${Math.max(6, Math.min(20, 6 + volume * 15))}px` }} 
+                      />
+                    </div>
+                  </>
                 ) : (
                   <MicOff className="size-6" />
                 )}

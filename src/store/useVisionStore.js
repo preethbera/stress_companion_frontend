@@ -4,7 +4,7 @@ const initialCameraState = {
   connectionStatus: 'disconnected', // 'disconnected' | 'connecting' | 'connected'
   error: null,
   warnings: [],
-  aspectRatio: "16 / 9",
+  aspectRatio: 16 / 9,
   boundingBox: null,
 };
 

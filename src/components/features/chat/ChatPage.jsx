@@ -124,6 +124,7 @@ export default function ChatPage({ user, onLogout }) {
               <VoicePanel
                 aiState={chatProps.aiState}
                 isMicOn={chatProps.isMicOn}
+                volume={chatProps.volume}
                 isUserSpeaking={chatProps.isUserSpeaking}
                 onStop={handleStopSession}
                 onToggleMic={chatProps.toggleMic}

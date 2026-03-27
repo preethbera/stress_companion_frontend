@@ -80,7 +80,7 @@ export function ConversationPanel({
         </Conversation>
 
         {/* 3. PROMPT INPUT FOOTER */}
-        <PromptInput onSubmit={handleSubmit} className="p-3 w-full relative">
+        <PromptInput onSubmit={handleSubmit} className="p-3 w-full">
           <PromptInputBody>
             <PromptInputTextarea
               value={input}
@@ -101,7 +101,7 @@ export function ConversationPanel({
               <PromptInputSelectTrigger>
                 <PromptInputSelectValue />
               </PromptInputSelectTrigger>
-              <PromptInputSelectContent>
+              <PromptInputSelectContent position="popper" side="top">
                 {LLM_MODELS.map((model) => (
                   <PromptInputSelectItem key={model.id} value={model.id}>
                     {model.name}
