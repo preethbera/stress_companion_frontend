@@ -28,9 +28,9 @@ const VoicePanel = ({
   onToggleMic,
 }) => {
   // Session State
-  const hasStarted = useSessionStore(
-    (state) => state.sessionStatus === "active",
-  );
+  const sessionStatus = useSessionStore((state) => state.sessionStatus);
+  const hasStarted = sessionStatus === "active";
+  const isPreparing = sessionStatus === "preparing";
   const setSessionStatus = useSessionStore(
     (state) => state.setSessionStatus,
   );
@@ -78,7 +78,7 @@ const VoicePanel = ({
       </div>
 
       <div className="col-start-2 row-start-2 place-self-center text-center">
-        {!hasStarted ? (
+        {!hasStarted && !isPreparing ? (
           <div className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
             <div className="w-28 h-28 mb-8 rounded-full bg-primary/5 flex items-center justify-center border border-primary/10">
               <Mic className="w-12 h-12 text-primary" />
@@ -96,8 +96,8 @@ const VoicePanel = ({
           </div>
         ) : (
           <RadialVisualizer
-            state={aiState === "idle" ? "disconnected" : aiState}
-            text={aiState}
+            state={isPreparing ? "connecting" : (aiState === "idle" ? "disconnected" : aiState)}
+            text={isPreparing ? "preparing" : aiState}
             barCount={64}
             radius={96}
             className="text-primary"
@@ -106,9 +106,9 @@ const VoicePanel = ({
       </div>
 
       <div className="col-start-2 row-start-3 justify-self-center mb-8 shadow-md">
-        {!hasStarted ? (
+        {!hasStarted && !isPreparing ? (
           <Button
-            onClick={() => setSessionStatus("active")}
+            onClick={() => setSessionStatus("preparing")}
             type="button"
             size="2xl"
             className="text-lg font-bold rounded-xl"
@@ -120,6 +120,8 @@ const VoicePanel = ({
             />
             Start Conversation
           </Button>
+        ) : isPreparing ? (
+          <div className="h-16" />
         ) : (
           <ButtonGroup>
             <Button
@@ -129,7 +131,6 @@ const VoicePanel = ({
               size="2xl"
               className="relative overflow-hidden"
             >
-              {/* Subtle background pulse tied to volume */}
               {isMicOn && (
                 <div
                   className="absolute inset-0 bg-black/10 transition-transform duration-75 ease-linear"
@@ -137,7 +138,6 @@ const VoicePanel = ({
                 />
               )}
 
-              {/* Icon scales directly with the volume */}
               <div
                 className="relative z-10 flex items-center justify-center transition-transform duration-75 ease-linear"
                 style={{

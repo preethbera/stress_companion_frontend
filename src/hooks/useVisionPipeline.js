@@ -40,7 +40,47 @@ export function useVisionPipeline({
   const sessionStatus = useSessionStore(
     (state) => state.sessionStatus,
   );
-  const isActive = !optOut && sessionStatus === "active";
+  const modelStatus = useSessionStore((state) => state.modelStatus);
+  const setSessionStatus = useSessionStore((state) => state.setSessionStatus);
+
+  const isPreparing = sessionStatus === "preparing";
+  const isActive = !optOut && (sessionStatus === "active" || isPreparing);
+
+  useEffect(() => {
+    if (isPreparing && modelStatus === "ready") {
+      const checkAndTransition = () => {
+        const { optical, thermal } = useVisionStore.getState();
+        const { hardwareConfig } = useSessionStore.getState();
+        const optOutOptical = hardwareConfig.optOutOptical;
+        const optOutThermal = hardwareConfig.optOutThermal;
+
+        const opticalReady = optOutOptical || !!optical.cameraMetadata;
+        const thermalReady = optOutThermal || !!thermal.cameraMetadata;
+
+        if (opticalReady && thermalReady) {
+          setSessionStatus("active");
+        }
+      };
+
+      checkAndTransition();
+
+      const unsubscribe = useVisionStore.subscribe((state) => {
+        const { optical, thermal } = state;
+        const { hardwareConfig } = useSessionStore.getState();
+        const optOutOptical = hardwareConfig.optOutOptical;
+        const optOutThermal = hardwareConfig.optOutThermal;
+
+        const opticalReady = optOutOptical || !!optical.cameraMetadata;
+        const thermalReady = optOutThermal || !!thermal.cameraMetadata;
+
+        if (opticalReady && thermalReady) {
+          setSessionStatus("active");
+        }
+      });
+
+      return () => unsubscribe();
+    }
+  }, [isPreparing, modelStatus, setSessionStatus]);
 
   const previousCenterRef = useRef(null);
   const socketRef = useRef(null);
