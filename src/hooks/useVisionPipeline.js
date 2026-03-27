@@ -37,10 +37,10 @@ export function useVisionPipeline({
       : state.hardwareConfig.optOutThermal,
   );
 
-  const conversationStatus = useSessionStore(
-    (state) => state.conversationStatus,
+  const sessionStatus = useSessionStore(
+    (state) => state.sessionStatus,
   );
-  const isActive = !optOut && conversationStatus === "started";
+  const isActive = !optOut && sessionStatus === "active";
 
   const previousCenterRef = useRef(null);
   const socketRef = useRef(null);

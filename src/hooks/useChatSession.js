@@ -6,11 +6,11 @@ import { useSessionStore } from "@/store/useSessionStore";
 export function useChatSession() {
   const micDeviceId = useSessionStore((state) => state.hardwareConfig?.micDeviceId);
 
-  const conversationStatus = useSessionStore((state) => state.conversationStatus);
-  const setConversationStatus = useSessionStore((state) => state.setConversationStatus);
+  const sessionStatus = useSessionStore((state) => state.sessionStatus);
+  const setSessionStatus = useSessionStore((state) => state.setSessionStatus);
   
   // Single source of truth from Zustand
-  const isStarted = conversationStatus === 'started';
+  const isStarted = sessionStatus === 'active';
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -64,8 +64,8 @@ export function useChatSession() {
     setAiState("idle");
     hasStartedRef.current = false;
     // Tell Zustand to reset so we can start again later!
-    setConversationStatus('idle'); 
-  }, [cancelSpeech, stopListening, setConversationStatus]);
+    setSessionStatus('ready'); 
+  }, [cancelSpeech, stopListening, setSessionStatus]);
 
   const handleSendMessage = useCallback(async (textOverride) => {
     const textToSend = typeof textOverride === "string" ? textOverride : input;

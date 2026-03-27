@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollText, MessageSquare } from "lucide-react";
+import { ScrollText} from "lucide-react";
 import { useSessionStore } from "@/store/useSessionStore";
 
 // AI Elements Imports
@@ -27,7 +27,7 @@ export function ConversationPanel({
   onSendMessage,
 }) {
   const hasStarted = useSessionStore(
-    (state) => state.conversationStatus === "started",
+    (state) => state.sessionStatus === "active",
   );
 
   const handleSubmit = () => {

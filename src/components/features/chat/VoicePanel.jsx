@@ -29,10 +29,10 @@ const VoicePanel = ({
 }) => {
   // Session State
   const hasStarted = useSessionStore(
-    (state) => state.conversationStatus === "started",
+    (state) => state.sessionStatus === "active",
   );
-  const setConversationStatus = useSessionStore(
-    (state) => state.setConversationStatus,
+  const setSessionStatus = useSessionStore(
+    (state) => state.setSessionStatus,
   );
 
   // UI State
@@ -108,10 +108,10 @@ const VoicePanel = ({
       <div className="col-start-2 row-start-3 justify-self-center mb-8 shadow-md">
         {!hasStarted ? (
           <Button
-            onClick={() => setConversationStatus("started")}
+            onClick={() => setSessionStatus("active")}
             type="button"
             size="2xl"
-            className="text-lg rounded-xl"
+            className="text-lg font-bold rounded-xl"
           >
             <Play
               className="h-6 w-6 mr-2"

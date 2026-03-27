@@ -30,7 +30,7 @@ export default function StressAnalysisSession({ user, onLogout }) {
     );
   }
 
-  if (sessionStatus === "active") {
+  if (sessionStatus === "ready" || sessionStatus === "preparing" || sessionStatus === "active") {
     return <ChatPage user={user} onLogout={onLogout} />;
   }
 

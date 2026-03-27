@@ -1,11 +1,9 @@
 import { create } from 'zustand';
 
 const initialState = {
-  sessionStatus: 'setup', // 'setup' | 'active' | 'completed'
+  sessionStatus: 'setup', // 'setup' | 'ready' | 'preparing' | 'active' | 'completed'
 
   modelStatus: 'idle', // 'idle' | 'loading' | 'ready' | 'error'
-
-  conversationStatus: 'idle', // 'idle' | 'started'
   
   // Stores the locked-in hardware configuration for the session
   hardwareConfig: {
@@ -29,8 +27,6 @@ export const useSessionStore = create((set) => ({
   // Updates the status of the face model (e.g., during loading or error states)
   setModelStatus: (status) => set({ modelStatus: status }),
 
-  setConversationStatus: (status) => set({ conversationStatus: status }),
-
   // Updates specific hardware configuration values incrementally
   setHardwareConfig: (config) => set((state) => ({
     hardwareConfig: { ...state.hardwareConfig, ...config }
@@ -38,7 +34,7 @@ export const useSessionStore = create((set) => ({
 
   // Transitions the app to the active chat state with the finalized hardware payload
   initializeSession: (setupData) => set({
-    sessionStatus: 'active',
+    sessionStatus: 'ready',
     hardwareConfig: setupData
   }),
 

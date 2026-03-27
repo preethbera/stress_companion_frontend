@@ -52,14 +52,14 @@ export default function SetupPage() {
   };
 
   const handleComplete = () => {
-    useSessionStore.getState().setSessionStatus('active');
+    useSessionStore.getState().setSessionStatus('ready');
   };
 
   // Smart Skip Handler
   const handleSkip = async () => {
     setIsSkipping(true);
     await autoDetectSetup();
-    useSessionStore.getState().setSessionStatus('active');
+    useSessionStore.getState().setSessionStatus('ready');
     setIsSkipping(false);
     
   };
