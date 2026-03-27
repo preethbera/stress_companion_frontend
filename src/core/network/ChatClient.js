@@ -6,9 +6,9 @@ export class ChatClient {
     this.sessionId = crypto.randomUUID();
   }
 
-  async sendMessage(userText) {
+  async sendMessage(userText, endpoint = API_ENDPOINTS.CHAT_LOCAL) {
     try {
-      const response = await fetch(API_ENDPOINTS.CHAT, {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

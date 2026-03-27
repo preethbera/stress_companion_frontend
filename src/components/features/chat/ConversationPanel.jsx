@@ -1,6 +1,7 @@
 import React from "react";
-import { ScrollText} from "lucide-react";
+import { ScrollText } from "lucide-react";
 import { useSessionStore } from "@/store/useSessionStore";
+import { LLM_MODELS } from "@/config/api";
 
 // AI Elements Imports
 import {
@@ -17,6 +18,13 @@ import {
 import {
   PromptInput,
   PromptInputTextarea,
+  PromptInputBody,
+  PromptInputFooter,
+  PromptInputSelect,
+  PromptInputSelectContent,
+  PromptInputSelectItem,
+  PromptInputSelectTrigger,
+  PromptInputSelectValue,
   PromptInputSubmit,
 } from "@/components/ai-elements/prompt-input";
 
@@ -29,6 +37,8 @@ export function ConversationPanel({
   const hasStarted = useSessionStore(
     (state) => state.sessionStatus === "active",
   );
+  const selectedModel = useSessionStore((state) => state.selectedModel);
+  const setSelectedModel = useSessionStore((state) => state.setSelectedModel);
 
   const handleSubmit = () => {
     // The PromptInput handles the preventDefault internally
@@ -71,19 +81,36 @@ export function ConversationPanel({
 
         {/* 3. PROMPT INPUT FOOTER */}
         <PromptInput onSubmit={handleSubmit} className="p-3 w-full relative">
-          <PromptInputTextarea
-            value={input}
-            placeholder={
-              hasStarted ? "Type a message..." : "Start session first..."
-            }
-            onChange={(e) => setInput(e.currentTarget.value)}
-            disabled={!hasStarted}
-            className="p-3 bg-muted/30 focus-visible:ring-0"
-          />
-          <PromptInputSubmit
-            disabled={!input.trim() || !hasStarted}
-            className="absolute bottom-2 right-2"
-          />
+          <PromptInputBody>
+            <PromptInputTextarea
+              value={input}
+              placeholder={
+                hasStarted ? "Type a message..." : "Start session first..."
+              }
+              onChange={(e) => setInput(e.currentTarget.value)}
+              disabled={!hasStarted}
+            />
+          </PromptInputBody>
+          <PromptInputFooter>
+            <PromptInputSelect
+              onValueChange={(value) => {
+                setSelectedModel(value);
+              }}
+              value={selectedModel}
+            >
+              <PromptInputSelectTrigger>
+                <PromptInputSelectValue />
+              </PromptInputSelectTrigger>
+              <PromptInputSelectContent>
+                {LLM_MODELS.map((model) => (
+                  <PromptInputSelectItem key={model.id} value={model.id}>
+                    {model.name}
+                  </PromptInputSelectItem>
+                ))}
+              </PromptInputSelectContent>
+            </PromptInputSelect>
+            <PromptInputSubmit disabled={!input.trim() || !hasStarted} />
+          </PromptInputFooter>
         </PromptInput>
       </div>
     </div>

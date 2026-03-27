@@ -4,6 +4,8 @@ const initialState = {
   sessionStatus: 'setup', // 'setup' | 'ready' | 'preparing' | 'active' | 'completed'
 
   modelStatus: 'idle', // 'idle' | 'loading' | 'ready' | 'error'
+
+  selectedModel: 'qwen-local',
   
   // Stores the locked-in hardware configuration for the session
   hardwareConfig: {
@@ -23,6 +25,9 @@ export const useSessionStore = create((set) => ({
   
   // Updates the master phase of the application
   setSessionStatus: (status) => set({ sessionStatus: status }),
+
+  // Updates the selected LLM model
+  setSelectedModel: (model) => set({ selectedModel: model }),
   
   // Updates the status of the face model (e.g., during loading or error states)
   setModelStatus: (status) => set({ modelStatus: status }),
