@@ -6,7 +6,7 @@ export class ChatClient {
     this.sessionId = crypto.randomUUID();
   }
 
-  async sendMessage(userText, endpoint = API_ENDPOINTS.CHAT_LOCAL) {
+  async sendMessage(userText, endpoint = API_ENDPOINTS.CHAT_LOCAL, options = {}) {
     try {
       const response = await fetch(endpoint, {
         method: "POST",
@@ -17,6 +17,7 @@ export class ChatClient {
           session_id: this.sessionId,
           message: userText,
         }),
+        signal: options.signal,
       });
 
       if (!response.ok) {

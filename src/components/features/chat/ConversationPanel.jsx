@@ -33,6 +33,8 @@ export function ConversationPanel({
   input,
   setInput,
   onSendMessage,
+  aiState,
+  handleStopGeneration,
 }) {
   const hasStarted = useSessionStore(
     (state) => state.sessionStatus === "active",
@@ -109,7 +111,11 @@ export function ConversationPanel({
                 ))}
               </PromptInputSelectContent>
             </PromptInputSelect>
-            <PromptInputSubmit disabled={!input.trim() || !hasStarted} />
+            <PromptInputSubmit 
+              disabled={(!input.trim() && !(aiState === "thinking" || aiState === "speaking")) || !hasStarted} 
+              status={(aiState === "thinking" || aiState === "speaking") ? "streaming" : undefined}
+              onStop={handleStopGeneration}
+            />
           </PromptInputFooter>
         </PromptInput>
       </div>

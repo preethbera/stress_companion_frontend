@@ -5,11 +5,9 @@ import { useSessionStore } from "@/store/useSessionStore";
 
 export function useChatSession() {
   const micDeviceId = useSessionStore((state) => state.hardwareConfig?.micDeviceId);
-
   const sessionStatus = useSessionStore((state) => state.sessionStatus);
   const setSessionStatus = useSessionStore((state) => state.setSessionStatus);
   
-  // Single source of truth from Zustand
   const isStarted = sessionStatus === 'active';
 
   const [messages, setMessages] = useState([]);
@@ -18,59 +16,56 @@ export function useChatSession() {
   
   const hasStartedRef = useRef(false);
 
-  const { sendMessage, isLoading: isApiLoading } = useChatApi();
+  // Use the newly created API hook with abort capability
+  const { sendMessage, abort: abortApi, isLoading: isApiLoading } = useChatApi();
 
+  // Use the newly created Voice Agent without VAD dependencies
   const { 
     isListening: isMicOn, 
-    isUserSpeaking, 
     isAiSpeaking,
     volume,
     startAgent: startListening, 
     stopAgent: stopListening,
     clearTranscript,
     speak,
-    cancelSpeech 
+    cancelSpeech,
+    transcript // realtime transcript from SpeechService
   } = useVoiceAgent({
     deviceId: micDeviceId, 
-    onResult: (transcript) => setInput(transcript),
-    onInterrupt: () => setAiState("idle")
+    onResult: () => {}, 
+    onInterrupt: () => {}
   });
+
+  // Sync realtime transcript to input when mic is on so user can see what's being heard
+  useEffect(() => {
+    if (isMicOn) {
+      setInput(transcript);
+    }
+  }, [transcript, isMicOn]);
 
   useEffect(() => {
     if (isAiSpeaking) setAiState("speaking");
-    else if (isMicOn && !isAiSpeaking && !isUserSpeaking) setAiState("listening");
-    else if (!isMicOn) setAiState("idle");
-  }, [isAiSpeaking, isMicOn, isUserSpeaking]);
+    else if (isMicOn) setAiState("listening");
+    else if (!isMicOn && aiState !== "thinking") setAiState("idle"); 
+  }, [isAiSpeaking, isMicOn, aiState]);
 
-  const toggleMic = useCallback(() => {
-    if (isMicOn) stopListening();
-    else startListening();
-  }, [isMicOn, startListening, stopListening]);
-
-  // Sync session start logic safely using a Ref to prevent re-renders
-  useEffect(() => {
-    if (isStarted && !hasStartedRef.current) {
-      hasStartedRef.current = true;
-      const initialMsg = "I'm listening. You can speak freely here. How are you feeling?";
-      setMessages([{ id: Date.now().toString(), role: "assistant", content: initialMsg }]);
-      
-      startListening(); 
-      speak(initialMsg);
-    }
-  }, [isStarted, speak, startListening]);
-
-  const handleStop = useCallback(() => {
+  const handleStopGeneration = useCallback(() => {
+    abortApi();
     cancelSpeech();
-    stopListening();
     setAiState("idle");
-    hasStartedRef.current = false;
-    // Tell Zustand to reset so we can start again later!
-    setSessionStatus('ready'); 
-  }, [cancelSpeech, stopListening, setSessionStatus]);
+  }, [abortApi, cancelSpeech]);
 
   const handleSendMessage = useCallback(async (textOverride) => {
     const textToSend = typeof textOverride === "string" ? textOverride : input;
     if (!textToSend.trim()) return;
+
+    // Interrupt any ongoing generation if we send a new message
+    handleStopGeneration();
+
+    // Turn off mic if it was on (manual submit while mic was open)
+    if (isMicOn) {
+      stopListening();
+    }
 
     const userMsg = { id: Date.now().toString(), role: "user", content: textToSend };
     setMessages((prev) => [...prev, userMsg]);
@@ -78,24 +73,61 @@ export function useChatSession() {
     
     clearTranscript(); 
     setAiState("thinking");
-    cancelSpeech(); 
 
     try {
       const aiText = await sendMessage(textToSend);
       setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: aiText }]);
       speak(aiText);
     } catch (error) {
-      setAiState("idle");
+      if (error.name === 'AbortError') {
+        // Just aborted, no error display needed
+      } else {
+        setAiState("idle");
+      }
     }
-  }, [input, sendMessage, speak, cancelSpeech, clearTranscript]);
+  }, [input, sendMessage, speak, clearTranscript, handleStopGeneration, isMicOn, stopListening]);
 
-  // Auto-send hook dependencies fixed to utilize the global isStarted flag
-  useEffect(() => {
-    if (isMicOn && !isUserSpeaking && input.trim() && isStarted) {
-      const timer = setTimeout(() => handleSendMessage(), 1500);
-      return () => clearTimeout(timer);
+  const toggleMic = useCallback(() => {
+    if (isMicOn) {
+      // User turned off mic -> Stop listening and auto-send
+      const finalTranscript = stopListening();
+      if (finalTranscript || input.trim()) {
+        const textToSend = finalTranscript || input.trim();
+        handleSendMessage(textToSend);
+      } else {
+        setAiState("idle");
+      }
+    } else {
+      // User turned on mic -> Stop whatever AI was doing and start listening
+      if (aiState === "thinking" || aiState === "speaking") {
+        handleStopGeneration();
+      }
+      setInput("");
+      clearTranscript();
+      startListening();
+      setAiState("listening");
     }
-  }, [isMicOn, isUserSpeaking, input, isStarted, handleSendMessage]);
+  }, [isMicOn, stopListening, startListening, input, aiState, handleStopGeneration, clearTranscript, handleSendMessage]);
+
+  useEffect(() => {
+    if (isStarted && !hasStartedRef.current) {
+      hasStartedRef.current = true;
+      const initialMsg = "I'm listening. You can speak freely here. How are you feeling?";
+      setMessages([{ id: Date.now().toString(), role: "assistant", content: initialMsg }]);
+      
+      startListening(); // Open mic immediately or not? User can manually toggle it. But usually we start with mic on.
+      speak(initialMsg);
+    }
+  }, [isStarted, speak, startListening]);
+
+  const handleStop = useCallback(() => {
+    handleStopGeneration();
+    if(isMicOn) {
+      stopListening();
+    }
+    hasStartedRef.current = false;
+    setSessionStatus('ready'); 
+  }, [handleStopGeneration, stopListening, setSessionStatus, isMicOn]);
 
   return {
     messages, 
@@ -103,12 +135,11 @@ export function useChatSession() {
     setInput, 
     aiState, 
     isMicOn, 
-    isSpeaking: isAiSpeaking, 
     volume,
     isApiLoading,
     handleSendMessage, 
     toggleMic, 
     handleStop,
-    isUserSpeaking 
+    handleStopGeneration
   };
 }

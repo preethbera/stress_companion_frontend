@@ -9,7 +9,6 @@ import VoicePanel from "@/components/features/chat/VoicePanel";
 import { ConversationPanel } from "@/components/features/chat/ConversationPanel";
 import { CameraStack } from "@/components/features/chat/CameraStack";
 
-// The Decoupled Hooks
 import { useChatSession } from "@/hooks/useChatSession";
 import { useVisionPipeline } from "@/hooks/useVisionPipeline";
 
@@ -125,7 +124,6 @@ export default function ChatPage({ user, onLogout }) {
                 aiState={chatProps.aiState}
                 isMicOn={chatProps.isMicOn}
                 volume={chatProps.volume}
-                isUserSpeaking={chatProps.isUserSpeaking}
                 onStop={handleStopSession}
                 onToggleMic={chatProps.toggleMic}
               />
@@ -136,6 +134,8 @@ export default function ChatPage({ user, onLogout }) {
                 input={chatProps.input}
                 setInput={chatProps.setInput}
                 onSendMessage={chatProps.handleSendMessage}
+                aiState={chatProps.aiState}
+                handleStopGeneration={chatProps.handleStopGeneration}
               />
             }
           />
