@@ -27,7 +27,6 @@ const VoicePanel = ({
   onStop,
   onToggleMic,
 }) => {
-  // Session State
   const sessionStatus = useSessionStore((state) => state.sessionStatus);
   const hasStarted = sessionStatus === "active";
   const isPreparing = sessionStatus === "preparing";
@@ -35,7 +34,6 @@ const VoicePanel = ({
     (state) => state.setSessionStatus,
   );
 
-  // UI State
   const isOpticalVisible = useUIStore((state) => state.isOpticalVisible);
   const isThermalVisible = useUIStore((state) => state.isThermalVisible);
   const isTranscriptVisible = useUIStore((state) => state.isTranscriptVisible);
@@ -58,15 +56,15 @@ const VoicePanel = ({
                 size="icon"
                 type="button"
                 onClick={toggleTranscript}
-                className="rounded-full h-10 w-10 bg-background/50 backdrop-blur-sm border-border hover:bg-background transition-colors"
+                className="rounded-full h-10 w-10 bg-background/50 backdrop-blur-sm border-border hover:bg-accent transition-colors"
                 aria-label={
                   isTranscriptVisible ? "Collapse Visuals" : "Open Chat"
                 }
               >
                 {isTranscriptVisible ? (
-                  <Maximize2 className="h-5 w-5" />
+                  <Maximize2 className="h-5 w-5 text-foreground" />
                 ) : (
-                  <MessageSquare className="h-5 w-5" />
+                  <MessageSquare className="h-5 w-5 text-foreground" />
                 )}
               </Button>
             </TooltipTrigger>
@@ -80,7 +78,7 @@ const VoicePanel = ({
       <div className="col-start-2 row-start-2 place-self-center text-center">
         {!hasStarted && !isPreparing ? (
           <div className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
-            <div className="w-28 h-28 mb-8 rounded-full bg-primary/5 flex items-center justify-center border border-primary/10">
+            <div className="w-28 h-28 mb-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
               <Mic className="w-12 h-12 text-primary" />
             </div>
             <h3 className="text-2xl font-semibold text-foreground">
@@ -135,7 +133,6 @@ const VoicePanel = ({
                 {isMicOn ? (
                   <>
                     <Mic className="size-6" />
-                    {/* Google Meet Style 3-Dot/Bar Equalizer */}
                     <div className="flex items-center justify-center gap-1 h-6 ml-1">
                       <div 
                         className="w-[5px] bg-current rounded-full transition-all duration-75 ease-out" 

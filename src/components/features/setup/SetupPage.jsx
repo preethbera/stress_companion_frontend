@@ -16,8 +16,7 @@ import { usePreloadVisionModel } from "@/hooks/usePreloadVisionModel";
 import { useSessionStore } from "@/store/useSessionStore";
 
 export default function SetupPage() {
-
-  usePreloadVisionModel('primary'); // for preloading the vision model during setup
+  usePreloadVisionModel('primary');
 
   const [availableHardware, setAvailableHardware] = useState({
     mic: true,
@@ -26,16 +25,20 @@ export default function SetupPage() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isSkipping, setIsSkipping] = useState(false);
 
-
   const steps = useMemo(() => {
     const flow = [{ id: "permission", component: PermissionStep }];
-    if (availableHardware.mic)
+    
+    if (availableHardware.mic) {
       flow.push({ id: "mic", component: MicrophoneStep });
+    }
+    
     if (availableHardware.cam) {
       flow.push({ id: "optical", component: OpticalStep });
       flow.push({ id: "thermal", component: ThermalStep });
     }
+    
     flow.push({ id: "connection", component: ConnectionStep });
+    
     return flow;
   }, [availableHardware]);
 
@@ -44,7 +47,9 @@ export default function SetupPage() {
 
   const handleNext = () =>
     setCurrentStepIndex((prev) => Math.min(prev + 1, totalSteps - 1));
-  const handleBack = () => setCurrentStepIndex((prev) => Math.max(prev - 1, 0));
+    
+  const handleBack = () => 
+    setCurrentStepIndex((prev) => Math.max(prev - 1, 0));
 
   const handlePermissionsResolved = (perms) => {
     setAvailableHardware(perms);
@@ -55,28 +60,27 @@ export default function SetupPage() {
     useSessionStore.getState().setSessionStatus('ready');
   };
 
-  // Smart Skip Handler
   const handleSkip = async () => {
     setIsSkipping(true);
     await autoDetectSetup();
     useSessionStore.getState().setSessionStatus('ready');
     setIsSkipping(false);
-    
   };
 
   return (
     <div className="h-full flex flex-col bg-background text-foreground overflow-hidden pt-6">
-      <header className="w-full p-4 md:px-8 flex justify-between items-center border-b shrink-0">
+      <header className="w-full p-4 md:px-8 flex justify-between items-center border-b border-border shrink-0">
         <h1 className="text-lg font-bold tracking-tight">System Calibration</h1>
         <Button
           variant="ghost"
           size="sm"
           onClick={handleSkip}
           disabled={isSkipping}
+          className="text-muted-foreground hover:text-foreground"
         >
           {isSkipping ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />{" "}
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               Auto-Configuring...
             </>
           ) : (
@@ -87,7 +91,7 @@ export default function SetupPage() {
 
       <Progress
         value={((currentStepIndex + 1) / totalSteps) * 100}
-        className="h-1 rounded-none shrink-0"
+        className="h-1 rounded-full shrink-0"
       />
 
       <main className="flex-1 flex flex-col items-center py-12 px-4 md:px-8 overflow-y-auto">

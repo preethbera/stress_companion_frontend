@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { CameraFeed } from "./CameraFeed";
 
-// Import your stores
 import { useUIStore } from "@/store/useUIStore";
 import { useVisionStore } from "@/store/useVisionStore";
 
@@ -15,7 +14,6 @@ export function CameraPanel({
   iconColorClass,
   cameraId,
 }) {
-
   const connectionStatus = useVisionStore((state) => state[cameraId].connectionStatus);
   const toggleOptical = useUIStore((state) => state.toggleOptical);
   const toggleThermal = useUIStore((state) => state.toggleThermal);
@@ -25,28 +23,28 @@ export function CameraPanel({
     if (cameraId === "thermal") toggleThermal();
   };
 
-
-  // Map the status directly to Shadcn variants and Lucide icons
   const badgeConfig = {
     connected: {
       label: "Live",
       variant: "outline",
-      icon: <Circle className="h-3 w-3 fill-green-500 text-green-500" />,
+      icon: <Circle className="h-3 w-3 fill-emerald-500 text-emerald-500 dark:fill-emerald-400 dark:text-emerald-400" />,
+      className: "border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
     },
     connecting: {
       label: "Connecting...",
       variant: "secondary",
-      icon: <Loader2 className="h-3 w-3 animate-spin" />,
+      icon: <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />,
+      className: "bg-secondary text-secondary-foreground",
     },
     disconnected: {
       label: "Offline",
       variant: "destructive",
       icon: <WifiOff className="h-3 w-3" />,
+      className: "", 
     },
   };
 
-  const currentStatus =
-    badgeConfig[connectionStatus] || badgeConfig["disconnected"];
+  const currentStatus = badgeConfig[connectionStatus] || badgeConfig["disconnected"];
 
   return (
     <div className="relative flex flex-col flex-1 min-h-0 bg-background transition-all border-b border-border">
@@ -56,19 +54,18 @@ export function CameraPanel({
           <span className="text-sm font-medium text-foreground">{title}</span>
         </div>
         <div className="flex items-center gap-2">
-          {/* Inline Badge - No extra wrapper component needed */}
           <Badge
             variant={currentStatus.variant}
-            className="flex items-center gap-1.5 w-fit"
+            className={cn("flex items-center gap-1.5 w-fit px-2.5 py-0.5", currentStatus.className)}
           >
             {currentStatus.icon}
-            <span>{currentStatus.label}</span>
+            <span className="font-medium">{currentStatus.label}</span>
           </Badge>
 
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             onClick={handleClose}
           >
             <X className="h-4 w-4" />

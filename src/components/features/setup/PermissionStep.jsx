@@ -5,7 +5,6 @@ import { StepLayout, StepHeader, StepFooter } from "./SharedComponents";
 import { usePermissionCheck } from "@/hooks/setup/usePermissionCheck";
 
 export function PermissionStep({ onNext }) {
-  // Logic is completely abstracted away into the hook
   const { isChecking, perms } = usePermissionCheck();
 
   const allGranted = perms.mic && perms.cam;
@@ -18,7 +17,7 @@ export function PermissionStep({ onNext }) {
       />
 
       <div className="flex-1 flex flex-col items-center justify-center space-y-6 max-w-lg mx-auto w-full">
-        <div className="w-full border rounded-xl p-6 space-y-5 shadow-sm bg-card">
+        <div className="w-full border border-border rounded-xl p-6 space-y-5 shadow-sm bg-card text-card-foreground">
           {[
             { label: "Microphone", granted: perms.mic },
             { label: "Optical Camera", granted: perms.cam },
@@ -30,7 +29,7 @@ export function PermissionStep({ onNext }) {
           ].map((item, i) => (
             <div key={i} className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="font-medium">{item.label}</span>
+                <span className="font-medium text-foreground">{item.label}</span>
                 {item.sub && (
                   <span className="text-xs text-muted-foreground">
                     {item.sub}
@@ -40,7 +39,7 @@ export function PermissionStep({ onNext }) {
               {isChecking ? (
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               ) : item.granted ? (
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               ) : (
                 <XCircle className="h-5 w-5 text-destructive" />
               )}
@@ -51,11 +50,11 @@ export function PermissionStep({ onNext }) {
         {!isChecking && !allGranted && (
           <Alert
             variant="warning"
-            className="w-full bg-amber-500/10 text-amber-600 border-amber-500/20"
+            className="w-full bg-amber-50 dark:bg-amber-500/10 text-amber-900 dark:text-amber-400 border-amber-500/20"
           >
-            <AlertTriangle className="h-4 w-4" />
+            <AlertTriangle className="h-4 w-4 !text-amber-700 dark:!text-amber-400" />
             <AlertTitle>Missing Permissions</AlertTitle>
-            <AlertDescription className="text-sm mt-1">
+            <AlertDescription className="text-sm mt-1 text-amber-800/90 dark:text-amber-400/90">
               {!perms.mic && !perms.cam
                 ? "Neither microphone nor camera access was granted."
                 : !perms.mic

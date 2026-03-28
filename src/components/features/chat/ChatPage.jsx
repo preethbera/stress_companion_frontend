@@ -116,7 +116,7 @@ export default function ChatPage({ user, onLogout }) {
     <>
       <div className="flex flex-col h-screen w-full bg-background">
         <Navbar user={user} onLogout={onLogout} />
-        <main className="flex-1 overflow-hidden border-t w-full">
+        <main className="flex-1 overflow-hidden w-full">
           <ChatLayout
             cameraSlot={<CameraStack />}
             voiceSlot={
