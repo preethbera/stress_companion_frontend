@@ -8,11 +8,14 @@ export function useChatSession() {
   const sessionStatus = useSessionStore((state) => state.sessionStatus);
   const setSessionStatus = useSessionStore((state) => state.setSessionStatus);
   
+  const aiState = useSessionStore((state) => state.aiState);
+  const setAiState = useSessionStore((state) => state.setAiState);
+  const isMicOn = useSessionStore((state) => state.isMicOn);
+  
   const isStarted = sessionStatus === 'active';
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [aiState, setAiState] = useState("idle"); 
   
   const hasStartedRef = useRef(false);
 
@@ -21,8 +24,6 @@ export function useChatSession() {
 
   // Use the newly created Voice Agent without VAD dependencies
   const { 
-    isMicOn, 
-    isAiSpeaking,
     volume,
     startAgent: startListening, 
     stopAgent: stopListening,
@@ -43,17 +44,11 @@ export function useChatSession() {
     }
   }, [transcript, isMicOn]);
 
-  useEffect(() => {
-    if (isAiSpeaking) setAiState("speaking");
-    else if (isMicOn) setAiState("listening");
-    else if (!isMicOn && aiState !== "thinking") setAiState("idle"); 
-  }, [isAiSpeaking, isMicOn, aiState]);
-
   const handleStopGeneration = useCallback(() => {
     abortApi();
     cancelSpeech();
     setAiState("idle");
-  }, [abortApi, cancelSpeech]);
+  }, [abortApi, cancelSpeech, setAiState]);
 
   const handleSendMessage = useCallback(async (textOverride) => {
     const textToSend = typeof textOverride === "string" ? textOverride : input;
@@ -85,7 +80,7 @@ export function useChatSession() {
         setAiState("idle");
       }
     }
-  }, [input, sendMessage, speak, clearTranscript, handleStopGeneration, isMicOn, stopListening]);
+  }, [input, sendMessage, speak, clearTranscript, handleStopGeneration, isMicOn, stopListening, setAiState]);
 
   const toggleMic = useCallback(() => {
     if (isMicOn) {
@@ -105,9 +100,9 @@ export function useChatSession() {
       setInput("");
       clearTranscript();
       startListening();
-      setAiState("listening");
+      // startListening now handles setting aiState to "listening" and isMicOn to true
     }
-  }, [isMicOn, stopListening, startListening, input, aiState, handleStopGeneration, clearTranscript, handleSendMessage]);
+  }, [isMicOn, stopListening, startListening, input, aiState, handleStopGeneration, clearTranscript, handleSendMessage, setAiState]);
 
   useEffect(() => {
     if (isStarted && !hasStartedRef.current) {
@@ -133,8 +128,6 @@ export function useChatSession() {
     messages, 
     input, 
     setInput, 
-    aiState, 
-    isMicOn, 
     volume,
     isApiLoading,
     handleSendMessage, 

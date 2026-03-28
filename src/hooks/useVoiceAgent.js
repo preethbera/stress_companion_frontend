@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { AudioStreamer } from "@/core/audio/AudioStreamer";
 import { SpeechService } from "@/core/audio/SpeechService";
 import { TTSEngine } from "@/core/audio/TTSEngine";
+import { useSessionStore } from "@/store/useSessionStore";
 
 export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
   // ==========================================
@@ -12,10 +13,13 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
   // ==========================================
   deviceId = undefined; 
 
+  // --- Zustand State ---
+  const isMicOn = useSessionStore((state) => state.isMicOn);
+  const setIsMicOn = useSessionStore((state) => state.setIsMicOn);
+  const setAiState = useSessionStore((state) => state.setAiState);
+
   // --- React State ---
-  const [isMicOn, setIsMicOn] = useState(false); 
   const [transcript, setTranscript] = useState(""); 
-  const [isAiSpeaking, setIsAiSpeaking] = useState(false); 
   const [volume, setVolume] = useState(0);
 
   // --- Core Engine Refs ---
@@ -36,8 +40,14 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
   // ==========================================
   useEffect(() => {
     ttsRef.current = new TTSEngine(
-      () => setIsAiSpeaking(true), 
-      () => setIsAiSpeaking(false) 
+      () => setAiState("speaking"), 
+      () => {
+        // Only set idle if we haven't already transitioned to another intended state
+        const currentAiState = useSessionStore.getState().aiState;
+        if (currentAiState === "speaking") {
+          setAiState("idle");
+        }
+      }
     );
 
     speechRef.current = new SpeechService(
@@ -58,7 +68,7 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
   // 2. MASTER CONTROLS
   // ==========================================
   const startAgent = useCallback(async () => {
-    if (isMicOn) return;
+    if (useSessionStore.getState().isMicOn) return;
 
     try {
       const stream = await AudioStreamer.getStream(deviceId);
@@ -76,14 +86,16 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
       updateVolume();
 
       setIsMicOn(true);
+      setAiState("listening");
     } catch (err) {
       console.error("useVoiceAgent: Failed to start audio hardware", err);
       setIsMicOn(false);
+      setAiState("idle");
     }
-  }, [deviceId, isMicOn]);
+  }, [deviceId, setIsMicOn, setAiState]);
 
   const stopAgent = useCallback(() => {
-    if (!isMicOn) return "";
+    if (!useSessionStore.getState().isMicOn) return "";
 
     const finalSpokenText = speechRef.current?.finalTranscript.trim() || "";
 
@@ -110,7 +122,7 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
     if (speechRef.current) speechRef.current.clearTranscript();
     
     return finalSpokenText;
-  }, [isMicOn]);
+  }, [setIsMicOn]);
 
   // ==========================================
   // 3. UTILITIES EXPOSED TO UI
@@ -129,8 +141,6 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
   }, []);
 
   return {
-    isMicOn, 
-    isAiSpeaking, 
     volume,
     transcript, 
     startAgent, 

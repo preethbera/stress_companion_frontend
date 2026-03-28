@@ -6,6 +6,9 @@ const initialState = {
   modelStatus: 'idle', // 'idle' | 'loading' | 'ready' | 'error'
 
   selectedModel: 'qwen-local',
+
+  aiState: 'idle', // 'idle' | 'listening' | 'thinking' | 'speaking'
+  isMicOn: false,
   
   // Stores the locked-in hardware configuration for the session
   hardwareConfig: {
@@ -22,6 +25,9 @@ export const useSessionStore = create((set) => ({
   ...initialState,
 
   // --- ACTIONS ---
+  
+  setAiState: (state) => set({ aiState: state }),
+  setIsMicOn: (isOn) => set({ isMicOn: isOn }),
   
   // Updates the master phase of the application
   setSessionStatus: (status) => set({ sessionStatus: status }),

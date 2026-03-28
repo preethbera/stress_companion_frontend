@@ -121,8 +121,6 @@ export default function ChatPage({ user, onLogout }) {
             cameraSlot={<CameraStack />}
             voiceSlot={
               <VoicePanel
-                aiState={chatProps.aiState}
-                isMicOn={chatProps.isMicOn}
                 volume={chatProps.volume}
                 onStop={handleStopSession}
                 onToggleMic={chatProps.toggleMic}
@@ -134,7 +132,6 @@ export default function ChatPage({ user, onLogout }) {
                 input={chatProps.input}
                 setInput={chatProps.setInput}
                 onSendMessage={chatProps.handleSendMessage}
-                aiState={chatProps.aiState}
                 handleStopGeneration={chatProps.handleStopGeneration}
               />
             }

@@ -33,12 +33,12 @@ export function ConversationPanel({
   input,
   setInput,
   onSendMessage,
-  aiState,
   handleStopGeneration,
 }) {
   const hasStarted = useSessionStore(
     (state) => state.sessionStatus === "active",
   );
+  const aiState = useSessionStore((state) => state.aiState);
   const selectedModel = useSessionStore((state) => state.selectedModel);
   const setSelectedModel = useSessionStore((state) => state.setSelectedModel);
 

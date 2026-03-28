@@ -21,13 +21,14 @@ import { useUIStore } from "@/store/useUIStore";
 import { useSessionStore } from "@/store/useSessionStore";
 
 const VoicePanel = ({
-  aiState = "idle",
-  isMicOn = false,
   volume = 0.6,
   onStop,
   onToggleMic,
 }) => {
   const sessionStatus = useSessionStore((state) => state.sessionStatus);
+  const aiState = useSessionStore((state) => state.aiState);
+  const isMicOn = useSessionStore((state) => state.isMicOn);
+  
   const hasStarted = sessionStatus === "active";
   const isPreparing = sessionStatus === "preparing";
   const setSessionStatus = useSessionStore(
