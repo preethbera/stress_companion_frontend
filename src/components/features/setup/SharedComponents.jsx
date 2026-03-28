@@ -173,7 +173,7 @@ export function BaseCameraStep({
         <div className="flex flex-col gap-5">
           <StepHeader align="left" title={title} description={description} />
 
-          <div className="bg-secondary/30 p-4 flex flex-col gap-6 rounded-xl border border-border">
+          <div className="bg-card p-4 flex flex-col gap-6 rounded-xl border border-border">
             {alert && (
               <Alert>
                 <AlertCircle className="w-4 h-4" />

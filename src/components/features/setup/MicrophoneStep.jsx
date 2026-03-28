@@ -27,7 +27,7 @@ export function MicrophoneStep({ onNext, onBack }) {
       />
 
       <div className="flex-1 flex flex-col items-center justify-center space-y-8 w-full max-w-md mx-auto">
-        <div className="flex flex-col items-center justify-center p-4 bg-secondary/30 rounded-xl border border-dashed border-border w-full">
+        <div className="flex flex-col items-center justify-center p-4 bg-card rounded-xl border border-dashed border-border w-full">
           <div className="flex items-center justify-between space-x-4 w-full">
             <div 
               className={cn(
