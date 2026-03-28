@@ -21,7 +21,7 @@ export function useChatSession() {
 
   // Use the newly created Voice Agent without VAD dependencies
   const { 
-    isListening: isMicOn, 
+    isMicOn, 
     isAiSpeaking,
     volume,
     startAgent: startListening, 
@@ -112,10 +112,10 @@ export function useChatSession() {
   useEffect(() => {
     if (isStarted && !hasStartedRef.current) {
       hasStartedRef.current = true;
-      const initialMsg = "I'm listening. You can speak freely here. How are you feeling?";
+      const initialMsg = "Hello! You can click the microphone to speak or type a message. How are you feeling?";
       setMessages([{ id: Date.now().toString(), role: "assistant", content: initialMsg }]);
       
-      startListening(); // Open mic immediately or not? User can manually toggle it. But usually we start with mic on.
+      // Do not start mic by default. User must click to turn it on.
       speak(initialMsg);
     }
   }, [isStarted, speak, startListening]);

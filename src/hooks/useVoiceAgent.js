@@ -13,7 +13,7 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
   deviceId = undefined; 
 
   // --- React State ---
-  const [isListening, setIsListening] = useState(false); 
+  const [isMicOn, setIsMicOn] = useState(false); 
   const [transcript, setTranscript] = useState(""); 
   const [isAiSpeaking, setIsAiSpeaking] = useState(false); 
   const [volume, setVolume] = useState(0);
@@ -58,7 +58,7 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
   // 2. MASTER CONTROLS
   // ==========================================
   const startAgent = useCallback(async () => {
-    if (isListening) return;
+    if (isMicOn) return;
 
     try {
       const stream = await AudioStreamer.getStream(deviceId);
@@ -75,15 +75,15 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
       };
       updateVolume();
 
-      setIsListening(true);
+      setIsMicOn(true);
     } catch (err) {
       console.error("useVoiceAgent: Failed to start audio hardware", err);
-      setIsListening(false);
+      setIsMicOn(false);
     }
-  }, [deviceId, isListening]);
+  }, [deviceId, isMicOn]);
 
   const stopAgent = useCallback(() => {
-    if (!isListening) return "";
+    if (!isMicOn) return "";
 
     const finalSpokenText = speechRef.current?.finalTranscript.trim() || "";
 
@@ -103,14 +103,14 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
       streamRef.current = null;
     }
 
-    setIsListening(false);
+    setIsMicOn(false);
     setVolume(0);
     setTranscript("");
 
     if (speechRef.current) speechRef.current.clearTranscript();
     
     return finalSpokenText;
-  }, [isListening]);
+  }, [isMicOn]);
 
   // ==========================================
   // 3. UTILITIES EXPOSED TO UI
@@ -129,7 +129,7 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
   }, []);
 
   return {
-    isListening, 
+    isMicOn, 
     isAiSpeaking, 
     volume,
     transcript, 
