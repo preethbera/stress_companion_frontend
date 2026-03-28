@@ -169,6 +169,7 @@ const VoicePanel = ({
               onClick={onStop}
               type="button"
               size="2xl"
+              className="hover:text-destructive"
             >
               <PhoneOff className="size-6" />
             </Button>
