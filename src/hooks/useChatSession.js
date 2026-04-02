@@ -2,8 +2,10 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useChatApi } from "@/hooks/useChatApi"; 
 import { useVoiceAgent } from "@/hooks/useVoiceAgent"; 
 import { useSessionStore } from "@/store/useSessionStore";
+import { sessionService } from "@/lib/services/sessionService";
 
 export function useChatSession() {
+  const activeSessionId = useSessionStore((state) => state.activeSessionId);
   const micDeviceId = useSessionStore((state) => state.hardwareConfig?.micDeviceId);
   const sessionStatus = useSessionStore((state) => state.sessionStatus);
   const setSessionStatus = useSessionStore((state) => state.setSessionStatus);
@@ -12,9 +14,12 @@ export function useChatSession() {
   const setAiState = useSessionStore((state) => state.setAiState);
   const isMicOn = useSessionStore((state) => state.isMicOn);
   
+  const chatHistory = useSessionStore((state) => state.chatHistory);
+  const setChatHistory = useSessionStore((state) => state.setChatHistory);
+  const addChatMessage = useSessionStore((state) => state.addChatMessage);
+  
   const isStarted = sessionStatus === 'active';
 
-  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   
   const hasStartedRef = useRef(false);
@@ -63,16 +68,27 @@ export function useChatSession() {
     }
 
     const userMsg = { id: Date.now().toString(), role: "user", content: textToSend };
-    setMessages((prev) => [...prev, userMsg]);
+    addChatMessage(userMsg);
     setInput("");
     
+    // Save User message to backend
+    if (activeSessionId) {
+      sessionService.saveChatMessage(activeSessionId, "user", textToSend).catch(err => console.error("Sync error:", err));
+    }
+
     clearTranscript(); 
     setAiState("thinking");
 
     try {
       const aiText = await sendMessage(textToSend);
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: aiText }]);
+      const aiMsg = { id: (Date.now() + 1).toString(), role: "assistant", content: aiText };
+      addChatMessage(aiMsg);
       speak(aiText);
+      
+      // Save AI message to backend
+      if (activeSessionId) {
+        sessionService.saveChatMessage(activeSessionId, "assistant", aiText).catch(err => console.error("Sync error:", err));
+      }
     } catch (error) {
       if (error.name === 'AbortError') {
         // Just aborted, no error display needed
@@ -80,7 +96,7 @@ export function useChatSession() {
         setAiState("idle");
       }
     }
-  }, [input, sendMessage, speak, clearTranscript, handleStopGeneration, isMicOn, stopListening, setAiState]);
+  }, [input, sendMessage, speak, clearTranscript, handleStopGeneration, isMicOn, stopListening, setAiState, addChatMessage, activeSessionId]);
 
   const toggleMic = useCallback(() => {
     if (isMicOn) {
@@ -108,12 +124,19 @@ export function useChatSession() {
     if (isStarted && !hasStartedRef.current) {
       hasStartedRef.current = true;
       const initialMsg = "Hello! You can click the microphone to speak or type a message. How are you feeling?";
-      setMessages([{ id: Date.now().toString(), role: "assistant", content: initialMsg }]);
       
+      const bootMsg = { id: Date.now().toString(), role: "assistant", content: initialMsg };
+      setChatHistory([bootMsg]);
+      
+      // Also potentially save the boots message to backend since it starts the chat flow
+      if (activeSessionId) {
+        sessionService.saveChatMessage(activeSessionId, "assistant", initialMsg).catch(err => console.error("Sync error:", err));
+      }
+
       // Do not start mic by default. User must click to turn it on.
       speak(initialMsg);
     }
-  }, [isStarted, speak, startListening]);
+  }, [isStarted, speak, startListening, activeSessionId, setChatHistory]);
 
   const handleStop = useCallback(() => {
     handleStopGeneration();
@@ -125,7 +148,7 @@ export function useChatSession() {
   }, [handleStopGeneration, stopListening, setSessionStatus, isMicOn]);
 
   return {
-    messages, 
+    messages: chatHistory, 
     input, 
     setInput, 
     volume,

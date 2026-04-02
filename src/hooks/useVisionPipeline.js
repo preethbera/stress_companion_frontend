@@ -37,11 +37,13 @@ export function useVisionPipeline({
       : state.hardwareConfig.optOutThermal,
   );
 
-  const sessionStatus = useSessionStore(
-    (state) => state.sessionStatus,
-  );
+  const sessionStatus = useSessionStore((state) => state.sessionStatus);
   const modelStatus = useSessionStore((state) => state.modelStatus);
   const setSessionStatus = useSessionStore((state) => state.setSessionStatus);
+  
+  // Explicitly subscribe to activeSessionId to ensure the WebSocket 
+  // uses the authenticated backend session to store frames properly
+  const activeSessionId = useSessionStore((state) => state.activeSessionId);
 
   const isPreparing = sessionStatus === "preparing";
   const isActive = !optOut && (sessionStatus === "active" || isPreparing);
@@ -120,8 +122,10 @@ export function useVisionPipeline({
           });
         }
 
+        // Passed down from Zustand subscriber now instead of a stale .getState() call
         const socket = new StressSocket(
           endpointName,
+          activeSessionId,
           (data) => {
             if (callbacksRef.current.onDataReceived) {
               callbacksRef.current.onDataReceived(data);
@@ -259,7 +263,7 @@ export function useVisionPipeline({
       }
       MediaRegistry.destroyStream(cameraId);
     };
-  }, [cameraId, deviceId, isActive, endpointName]);
+  }, [cameraId, deviceId, isActive, endpointName, activeSessionId]);
 
   return null;
 }

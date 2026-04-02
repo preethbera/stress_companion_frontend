@@ -1,20 +1,17 @@
 import { API_ENDPOINTS } from "@/config/api";
 
 export class ChatClient {
-  constructor() {
-    // Generate a stable session ID for this class instance
-    this.sessionId = crypto.randomUUID();
-  }
-
-  async sendMessage(userText, endpoint = API_ENDPOINTS.CHAT_LOCAL, options = {}) {
+  async sendMessage(userText, endpoint = API_ENDPOINTS.CHAT_LOCAL, options = {}, sessionId) {
     try {
+      if (!sessionId) throw new Error("A valid active Session ID is required to use Chat.");
+
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          session_id: this.sessionId,
+          session_id: sessionId,
           message: userText,
         }),
         signal: options.signal,

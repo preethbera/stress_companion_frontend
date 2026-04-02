@@ -14,6 +14,7 @@ import { autoDetectSetup } from "@/hooks/setup/autoDetectSetup";
 import { usePreloadVisionModel } from "@/hooks/usePreloadVisionModel";
 
 import { useSessionStore } from "@/store/useSessionStore";
+import { useSessionManager } from "@/hooks/useSessionManager";
 
 export default function SetupPage() {
   usePreloadVisionModel('primary');
@@ -51,24 +52,28 @@ export default function SetupPage() {
   const handleBack = () => 
     setCurrentStepIndex((prev) => Math.max(prev - 1, 0));
 
+  const { startBackendSession } = useSessionManager();
+
   const handlePermissionsResolved = (perms) => {
     setAvailableHardware(perms);
     handleNext();
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    await startBackendSession();
     useSessionStore.getState().setSessionStatus('ready');
   };
 
   const handleSkip = async () => {
     setIsSkipping(true);
     await autoDetectSetup();
+    await startBackendSession();
     useSessionStore.getState().setSessionStatus('ready');
     setIsSkipping(false);
   };
 
   return (
-    <div className="h-full flex flex-col bg-background text-foreground overflow-hidden pt-6">
+    <div className="h-full flex flex-col bg-background text-foreground overflow-hidden pt-6 mx-auto px-4 md:px-8 max-w-7xl">
       <header className="w-full p-4 md:px-8 flex justify-between items-center border-b border-border shrink-0">
         <h1 className="text-lg font-bold tracking-tight">System Calibration</h1>
         <Button

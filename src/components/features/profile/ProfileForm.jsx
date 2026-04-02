@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save } from "lucide-react";
+import { toast } from "sonner";
+import { useAuthStore } from "@/store/useAuthStore";
 
 import { profileSchema } from "@/lib/schemas/profile";
+import { mapBackendToFrontend, mapFrontendToBackend } from "@/lib/utils/profileMapper";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,29 +19,37 @@ import { PsychologyTab } from "./tabs/PsychologyTab";
 
 export function ProfileForm() {
   const [isSaving, setIsSaving] = useState(false);
+  const user = useAuthStore((state) => state.user);
+  const updateProfile = useAuthStore((state) => state.updateProfile);
 
   // Initialize Form
   const form = useForm({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      identity: { gender: "prefer_not_to_say", country: "", full_name: "" },
-      demographics: { work_schedule: "day" },
-      biometric: { glasses: false, height_cm: 0, weight_kg: 0 },
-      health_background: { known_conditions: [], current_medications: "" },
-      lifestyle: { common_stress_domains: [], physical_activity_level: "medium" },
-      psychological_traits: {
-        personality_scale: { 
-          openness: [50], conscientiousness: [50], extraversion: [50], 
-          agreeableness: [50], neuroticism: [50] 
-        }
-      },
-    },
+    defaultValues: mapBackendToFrontend(user) // Use mapper for safe defaults
   });
 
-  function onSubmit(data) {
+  // Pull existing user data into the UI form reactively when the backend payload hydrates
+  useEffect(() => {
+    if (user) {
+      form.reset(mapBackendToFrontend(user));
+    }
+  }, [user, form]);
+
+  async function onSubmit(data) {
     setIsSaving(true);
-    console.log("Saving:", data);
-    setTimeout(() => setIsSaving(false), 1500);
+    
+    // Abstract the structural mapping to external logic layer
+    const requestBody = mapFrontendToBackend(data);
+
+    try {
+      await updateProfile(requestBody);
+      toast.success("Profile saved successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error(useAuthStore.getState().error || "Failed to update profile.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -57,7 +68,6 @@ export function ProfileForm() {
           <Button 
             type="submit" 
             disabled={isSaving} 
-            // UPDATED: rounded-md to match other forms
             className="min-w-[120px] cursor-pointer rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
           >
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}

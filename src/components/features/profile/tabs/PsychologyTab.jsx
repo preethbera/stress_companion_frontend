@@ -4,7 +4,7 @@ import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/for
 import { Slider } from "@/components/ui/slider";
 
 export function PsychologyTab({ form }) {
-  const traits = ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"];
+  const traits = ["openness", "disciplined", "outgoing", "cooperative", "anxious"];
 
   return (
     // UPDATED: Added rounded-md, border color, and animation
@@ -37,6 +37,7 @@ export function PsychologyTab({ form }) {
                     min={0}
                     max={100}
                     step={1}
+                    value={field.value}
                     defaultValue={field.value}
                     onValueChange={field.onChange}
                     className="py-2"

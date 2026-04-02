@@ -2,8 +2,9 @@ import { API_ENDPOINTS } from "@/config/api";
 import { NETWORK_CONFIG } from "@/config/constants";
 
 export class StressSocket {
-  constructor(endpoint, onMessage, onStatusChange) {
+  constructor(endpoint, sessionId, onMessage, onStatusChange) {
     this.endpoint = endpoint;
+    this.sessionId = sessionId;
     this.onMessage = onMessage;
     this.onStatusChange = onStatusChange; // Lets React know when connected/disconnected
 
@@ -19,7 +20,11 @@ export class StressSocket {
     this.shouldConnect = true;
     this._updateStatus("connecting");
 
-    const wsUrl = API_ENDPOINTS.STRESS_WS(this.endpoint);
+    let wsUrl = API_ENDPOINTS.STRESS_WS(this.endpoint);
+    if (this.sessionId) {
+      wsUrl += `?session_id=${this.sessionId}`;
+    }
+    
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {

@@ -75,6 +75,8 @@ const AVATAR_SIZES = {
   default: "h-10 w-10",
 };
 
+import { API_BASE } from "@/config/api";
+
 // --- Sub-Components ---
 
 function NavLink({ item, isActive, className = "", onClick }) {
@@ -97,10 +99,16 @@ function NavLink({ item, isActive, className = "", onClick }) {
 }
 
 function UserAvatar({ user, size = "default" }) {
+  let avatarUrl = undefined;
+  if (user?.profile_image_path) {
+    const cleanPath = user.profile_image_path.replace(/\\/g, "/").replace(/^\/+/, "");
+    avatarUrl = `${API_BASE}/${cleanPath}`;
+  }
+
   return (
     // UPDATED: Added border-border explicitly
     <Avatar className={`${AVATAR_SIZES[size]} border border-border`}>
-      <AvatarImage src={user?.avatarUrl} alt={user?.name || "User"} />
+      <AvatarImage src={avatarUrl} alt={user?.name || "User"} className="object-cover" />
       <AvatarFallback className="bg-muted text-muted-foreground">
         {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
       </AvatarFallback>

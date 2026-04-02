@@ -1,6 +1,11 @@
 import { create } from 'zustand';
+import { sessionService } from '@/lib/services/sessionService';
 
 const initialState = {
+  activeSessionId: null,
+  sessionStats: null,
+  isFetchingStats: false,
+
   sessionStatus: 'setup', // 'setup' | 'ready' | 'preparing' | 'active' | 'completed'
 
   modelStatus: 'idle', // 'idle' | 'loading' | 'ready' | 'error'
@@ -20,9 +25,10 @@ const initialState = {
   },
 };
 
-export const useSessionStore = create((set) => ({
+export const useSessionStore = create((set, get) => ({
   // --- STATE ---
   ...initialState,
+  chatHistory: [],
 
   // --- ACTIONS ---
   
@@ -52,6 +58,14 @@ export const useSessionStore = create((set) => ({
   // Transitions the app to the teardown and reporting phase
   completeSession: () => set({ sessionStatus: 'completed' }),
 
+  setSessionStats: (stats) => set({ sessionStats: stats }),
+  
+  setActiveSessionId: (id) => set({ activeSessionId: id }),
+  
+  setChatHistory: (messages) => set({ chatHistory: messages }),
+  
+  addChatMessage: (msg) => set((state) => ({ chatHistory: [...state.chatHistory, msg] })),
+
   // Resets the store
-  resetSessionStore: () => set(initialState)
+  resetSessionStore: () => set({ ...initialState, chatHistory: [] })
 }));

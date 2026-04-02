@@ -22,7 +22,7 @@ export function LifestyleTab({ form }) {
           <FormField control={form.control} name="lifestyle.physical_activity_level" render={({ field }) => (
             <FormItem>
               <FormLabel>Physical Activity</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                 <FormControl>
                   {/* UPDATED: rounded-md */}
                   <SelectTrigger className="w-full rounded-md bg-background">

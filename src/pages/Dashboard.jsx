@@ -1,18 +1,29 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StatsGrid } from "@/components/layout/StatsGrid";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Zap, Brain, Wind } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useSessionStore } from "@/store/useSessionStore";
+import { useAuthStore } from "@/store/useAuthStore";
+
+import { useSessionManager } from "@/hooks/useSessionManager";
 
 export default function Dashboard() {
+  const { fetchDashboardStats, isFetchingStats } = useSessionManager();
+  const user = useAuthStore(state => state.user);
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, [fetchDashboardStats]);
+
   return (
     // Added py-6 and space-y-10 for vertical breathing room
-    <div className="py-6 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="py-6 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 mx-auto px-4 md:px-8 max-w-7xl">
       
       {/* === HEADER SECTION === */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Good Morning, Preeth</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Good Morning, {user?.first_name || user?.username || "User"}</h1>
           <p className="text-muted-foreground text-lg">
             How are you feeling today?
           </p>
@@ -33,7 +44,7 @@ export default function Dashboard() {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           Current Overview
         </h2>
-        <StatsGrid />
+        <StatsGrid isFetchingStats={isFetchingStats} />
       </div>
 
       {/* === QUICK ACTIONS GRID === */}

@@ -1,8 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Heart, Moon, Timer } from "lucide-react";
+import { useSessionStore } from "@/store/useSessionStore";
 
-export function StatsGrid() {
+export function StatsGrid({ isFetchingStats }) {
+  const sessionStats = useSessionStore((state) => state.sessionStats);
+
+  // Fallbacks for unhydrated data
+  const status = sessionStats?.status || "Medium";
+  const avgStress = sessionStats?.avg_stress || 45;
+  const totalSessions = sessionStats?.total_sessions || 0;
+
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {/* CARD 1: STRESS (Destructive/Red Theme) */}
@@ -12,9 +20,13 @@ export function StatsGrid() {
           <Heart className="h-4 w-4 text-destructive" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-foreground">Medium</div>
-          <Progress value={45} className="mt-3 h-2" />
-          <p className="text-xs text-muted-foreground mt-2">Based on your latest check-in</p>
+          <div className="text-2xl font-bold text-foreground">
+            {isFetchingStats ? "..." : status}
+          </div>
+          <Progress value={avgStress} className="mt-3 h-2" />
+          <p className="text-xs text-muted-foreground mt-2">
+            {isFetchingStats ? "Loading..." : `Based on ${totalSessions} tracked sessions`}
+          </p>
         </CardContent>
       </Card>
 

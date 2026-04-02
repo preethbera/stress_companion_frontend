@@ -9,6 +9,7 @@ export function useChatApi() {
   const abortControllerRef = useRef(null);
   
   const selectedModel = useSessionStore((state) => state.selectedModel);
+  const activeSessionId = useSessionStore((state) => state.activeSessionId);
 
   const abort = useCallback(() => {
     if (abortControllerRef.current) {
@@ -29,7 +30,7 @@ export function useChatApi() {
     const endpoint = modelConfig ? modelConfig.endpoint : API_ENDPOINTS.CHAT_LOCAL;
 
     try {
-      const reply = await chatClient.sendMessage(userText, endpoint, { signal: controller.signal });
+      const reply = await chatClient.sendMessage(userText, endpoint, { signal: controller.signal }, activeSessionId);
       return reply;
     } catch (err) {
       if (err.name === 'AbortError') {

@@ -41,10 +41,10 @@ export const profileSchema = z.object({
     coping_style: z.enum(["problem_focused", "emotion_focused", "avoidant"]),
     personality_scale: z.object({
       openness: z.array(z.number()).default([50]), // Using array for Shadcn Slider
-      conscientiousness: z.array(z.number()).default([50]),
-      extraversion: z.array(z.number()).default([50]),
-      agreeableness: z.array(z.number()).default([50]),
-      neuroticism: z.array(z.number()).default([50]),
+      disciplined: z.array(z.number()).default([50]),
+      outgoing: z.array(z.number()).default([50]),
+      cooperative: z.array(z.number()).default([50]),
+      anxious: z.array(z.number()).default([50]),
     }),
   }),
 });

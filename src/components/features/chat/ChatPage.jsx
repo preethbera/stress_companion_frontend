@@ -11,11 +11,13 @@ import { CameraStack } from "@/components/features/chat/CameraStack";
 
 import { useChatSession } from "@/hooks/useChatSession";
 import { useVisionPipeline } from "@/hooks/useVisionPipeline";
+import { useSessionManager } from "@/hooks/useSessionManager";
 
 import { CAMERA_CONFIG } from "@/config/constants";
 
 export default function ChatPage({ user, onLogout }) {
   const navigate = useNavigate();
+  const { finishBackendSession } = useSessionManager();
 
   // 2. Data Storage for Report Generation
   const stressTimelineRef = useRef([]);
@@ -90,7 +92,7 @@ export default function ChatPage({ user, onLogout }) {
     targetFps: CAMERA_CONFIG.THERMAL_FPS_RATE,
   });
 
-  const handleStopSession = () => {
+  const handleStopSession = async () => {
     // Collect timelines from refs before halting
     const finalOpticalData = stressTimelineRef.current;
     const finalThermalData = thermalTimelineRef.current;
@@ -109,6 +111,10 @@ export default function ChatPage({ user, onLogout }) {
       );
     }
     chatProps.handleStop();
+    
+    // Finalize the session in the backend schema (generates summaries)
+    await finishBackendSession();
+
     navigate("/report");
   };
 

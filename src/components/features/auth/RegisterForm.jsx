@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom"; // Import Link for client-side routing
+import { Link, useNavigate } from "react-router-dom"; // Import Link for client-side routing
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,18 +20,53 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuthStore } from "@/store/useAuthStore";
+import { toast } from "sonner";
 
 export function RegisterForm() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    age: "",
+    gender: "",
+    email: "",
+    password: "",
+  });
+  
+  const navigate = useNavigate();
+  // Safe destructuring using exact Zustand selectors to prevent React render hanging
+  const register = useAuthStore((state) => state.register);
+  const isLoading = useAuthStore((state) => state.isLoading);
+
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleSelectChange = (value) => {
+    setFormData((prev) => ({ ...prev, gender: value }));
+  };
 
   async function onSubmit(event) {
     event.preventDefault();
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 2000);
+    console.log("Register Form Submitted:", formData);
+    try {
+      await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        age: formData.age ? parseInt(formData.age, 10) : null,
+        gender: formData.gender || null,
+      });
+      console.log("Registration Successful!");
+      toast.success("Account created successfully!");
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("RegisterForm Catch Block Error:", err);
+      toast.error(useAuthStore.getState().error || "Failed to create account. Please try again.");
+    }
   }
 
   return (
-    // UPDATED: rounded-md, border-border, bg-card
     <Card className="w-full max-w-lg mx-auto shadow-md rounded-md border-border bg-card">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center text-foreground">
@@ -42,8 +77,6 @@ export function RegisterForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Google Sign Up */}
-        {/* UPDATED: rounded-md */}
         <Button variant="outline" className="w-full rounded-md border-input hover:bg-accent hover:text-accent-foreground" disabled={isLoading}>
           <svg
             className="mr-2 h-4 w-4"
@@ -78,9 +111,10 @@ export function RegisterForm() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-foreground">Full Name</Label>
-              {/* UPDATED: rounded-md */}
               <Input
                 id="name"
+                value={formData.name}
+                onChange={handleInputChange}
                 placeholder="John Doe"
                 required
                 disabled={isLoading}
@@ -89,10 +123,11 @@ export function RegisterForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="age" className="text-foreground">Age</Label>
-              {/* UPDATED: rounded-md */}
               <Input
                 id="age"
                 type="number"
+                value={formData.age}
+                onChange={handleInputChange}
                 placeholder="25"
                 min="13"
                 max="120"
@@ -105,13 +140,10 @@ export function RegisterForm() {
 
           <div className="space-y-2">
             <Label htmlFor="gender" className="text-foreground">Gender</Label>
-            <Select>
-              {/* UPDATED: rounded-md */}
+            <Select onValueChange={handleSelectChange} value={formData.gender}>
               <SelectTrigger id="gender" className="w-full rounded-md bg-background border-input">
                 <SelectValue placeholder="Select gender" />
               </SelectTrigger>
-
-              {/* UPDATED: rounded-md */}
               <SelectContent className="rounded-md bg-popover border-border">
                 <SelectItem value="male">Male</SelectItem>
                 <SelectItem value="female">Female</SelectItem>
@@ -123,10 +155,11 @@ export function RegisterForm() {
 
           <div className="space-y-2">
             <Label htmlFor="email" className="text-foreground">Email</Label>
-            {/* UPDATED: rounded-md */}
             <Input
               id="email"
               type="email"
+              value={formData.email}
+              onChange={handleInputChange}
               placeholder="m@example.com"
               required
               disabled={isLoading}
@@ -136,10 +169,11 @@ export function RegisterForm() {
 
           <div className="space-y-2">
             <Label htmlFor="password" className="text-foreground">Password</Label>
-            {/* UPDATED: rounded-md */}
             <Input
               id="password"
               type="password"
+              value={formData.password}
+              onChange={handleInputChange}
               required
               disabled={isLoading}
               className="rounded-md bg-background border-input"
@@ -165,7 +199,6 @@ export function RegisterForm() {
             </Label>
           </div>
 
-          {/* UPDATED: rounded-md */}
           <Button type="submit" className="w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
             {isLoading ? "Creating account..." : "Create Account"}
           </Button>

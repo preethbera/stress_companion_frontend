@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LoginForm } from "@/components/features/auth/LoginForm";
 import { RegisterForm } from "@/components/features/auth/RegisterForm";
@@ -9,36 +9,25 @@ import Dashboard from "./pages/Dashboard";
 import { Layout } from "@/components/layout/Layout";
 import SessionReportPage from "./pages/SessionReportPage";
 import StressAnalysisSession from "./pages/StressAnalysisSession";
+import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { useAuthStore } from "@/store/useAuthStore";
+import { Toaster } from "@/components/ui/sonner";
 
 const History = () => (
   <div className="py-8 text-2xl font-bold">Your Activity History</div>
 );
 
+// Helper component for public-only routes (like login/signup)
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated, user, logout } = useAuthStore();
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <Layout user={user} onLogout={logout}>{children}</Layout>;
+};
+
 export default function App() {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("stress_companion_user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-
-  const handleLogin = (userData) => {
-    const dummyUser = {
-      name: "Preeth",
-      email: userData.email,
-      avatarUrl: "https://github.com/shadcn.png",
-    };
-    setUser(dummyUser);
-    localStorage.setItem("stress_companion_user", JSON.stringify(dummyUser));
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem("stress_companion_user");
-    window.location.href = "/";
-  };
+  const { user, logout } = useAuthStore();
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
@@ -48,29 +37,21 @@ export default function App() {
           <Route
             path="/login"
             element={
-              user ? (
-                <Navigate to="/dashboard" />
-              ) : (
-                <Layout user={user}>
-                  <div className="flex items-center justify-center min-h-[80vh]">
-                    <LoginForm onLoginSuccess={handleLogin} />
-                  </div>
-                </Layout>
-              )
+              <PublicRoute>
+                <div className="flex items-center justify-center min-h-[80vh]">
+                  <LoginForm />
+                </div>
+              </PublicRoute>
             }
           />
           <Route
             path="/signup"
             element={
-              user ? (
-                <Navigate to="/dashboard" />
-              ) : (
-                <Layout user={user}>
-                  <div className="flex items-center justify-center min-h-[80vh]">
-                    <RegisterForm />
-                  </div>
-                </Layout>
-              )
+              <PublicRoute>
+                <div className="flex items-center justify-center min-h-[80vh]">
+                  <RegisterForm />
+                </div>
+              </PublicRoute>
             }
           />
 
@@ -78,64 +59,49 @@ export default function App() {
           <Route
             path="/dashboard"
             element={
-              user ? (
-                <Layout user={user} onLogout={handleLogout}>
-                  <Dashboard />
-                </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
             }
           />
-          <Route path="/chat" element={user ? (
-            <StressAnalysisSession user={user} onLogout={handleLogout} />
-          ) : <Navigate to="/login" />} />
+          <Route
+            path="/chat"
+            element={
+
+                <StressAnalysisSession />
+
+            }
+          />
           <Route
             path="/report"
             element={
-              user ? (
-                <Layout user={user} onLogout={handleLogout}>
-                  <SessionReportPage />
-                </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
+              <ProtectedRoute>
+                <SessionReportPage />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/history"
             element={
-              user ? (
-                <Layout user={user} onLogout={handleLogout}>
-                  <History />
-                </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
+              <ProtectedRoute>
+                <History />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/profile"
             element={
-              user ? (
-                <Layout user={user} onLogout={handleLogout}>
-                  <ProfilePage />
-                </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/settings"
             element={
-              user ? (
-                <Layout user={user} onLogout={handleLogout}>
-                  <SettingsPage />
-                </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
             }
           />
 
@@ -143,8 +109,8 @@ export default function App() {
           <Route
             path="/"
             element={
-              <Layout user={user} onLogout={handleLogout}>
-                <div className="py-20 text-center">
+              <Layout user={user} onLogout={logout}>
+                <div className="py-20 text-center mx-auto px-4 md:px-8 max-w-7xl">
                   <h1 className="text-4xl font-bold mb-4 tracking-tight md:text-6xl">
                     Welcome to Stress Companion
                   </h1>
@@ -158,6 +124,7 @@ export default function App() {
           />
         </Routes>
       </BrowserRouter>
+      <Toaster />
     </ThemeProvider>
   );
 }
