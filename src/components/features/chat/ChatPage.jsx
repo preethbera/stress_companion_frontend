@@ -2,7 +2,6 @@ import React, { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import ChatLayout from "@/components/features/chat/ChatLayout";
 import { Navbar } from "@/components/layout/Navbar";
-import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
 import VoicePanel from "@/components/features/chat/VoicePanel";
@@ -143,8 +142,6 @@ export default function ChatPage({ user, onLogout }) {
             }
           />
         </main>
-      </div>
-      <Toaster position="top-center"/>
     </>
   );
 }
