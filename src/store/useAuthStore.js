@@ -29,9 +29,17 @@ export const useAuthStore = create(
             isLoading: false,
           });
         } catch (error) {
+          let errorMessage = "Invalid email or password";
+          if (error.response?.data?.detail) {
+            if (Array.isArray(error.response.data.detail)) {
+              errorMessage = error.response.data.detail.map(e => e.msg).join(", ");
+            } else {
+              errorMessage = error.response.data.detail;
+            }
+          }
           set({
             isLoading: false,
-            error: error.response?.data?.detail || "Invalid email or password",
+            error: errorMessage,
           });
           throw error;
         }
@@ -54,9 +62,18 @@ export const useAuthStore = create(
             isLoading: false,
           });
         } catch (error) {
+          // Format FastAPI validation errors (array) into a string to prevent React crashes
+          let errorMessage = "Registration failed";
+          if (error.response?.data?.detail) {
+            if (Array.isArray(error.response.data.detail)) {
+              errorMessage = error.response.data.detail.map(e => e.msg).join(", ");
+            } else {
+              errorMessage = error.response.data.detail;
+            }
+          }
           set({
             isLoading: false,
-            error: error.response?.data?.detail || "Registration failed",
+            error: errorMessage,
           });
           throw error;
         }
@@ -74,9 +91,17 @@ export const useAuthStore = create(
           });
           return updatedUser;
         } catch (error) {
+          let errorMessage = "Profile update failed";
+          if (error.response?.data?.detail) {
+            if (Array.isArray(error.response.data.detail)) {
+              errorMessage = error.response.data.detail.map(e => e.msg).join(", ");
+            } else {
+              errorMessage = error.response.data.detail;
+            }
+          }
           set({
             isLoading: false,
-            error: error.response?.data?.detail || "Profile update failed",
+            error: errorMessage,
           });
           throw error;
         }
@@ -98,9 +123,17 @@ export const useAuthStore = create(
           });
           return updatedUser;
         } catch (error) {
+          let errorMessage = "Avatar upload failed";
+          if (error.response?.data?.detail) {
+            if (Array.isArray(error.response.data.detail)) {
+              errorMessage = error.response.data.detail.map(e => e.msg).join(", ");
+            } else {
+              errorMessage = error.response.data.detail;
+            }
+          }
           set({
             isLoading: false,
-            error: error.response?.data?.detail || "Avatar upload failed",
+            error: errorMessage,
           });
           throw error;
         }
