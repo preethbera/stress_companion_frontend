@@ -30,6 +30,7 @@ export function RegisterForm() {
     gender: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
   
   const navigate = useNavigate();
@@ -48,6 +49,12 @@ export function RegisterForm() {
 
   async function onSubmit(event) {
     event.preventDefault();
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match. Please try again.");
+      return;
+    }
+
     console.log("Register Form Submitted:", formData);
     try {
       await register({
@@ -173,6 +180,19 @@ export function RegisterForm() {
               id="password"
               type="password"
               value={formData.password}
+              onChange={handleInputChange}
+              required
+              disabled={isLoading}
+              className="rounded-md bg-background border-input"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={formData.confirmPassword}
               onChange={handleInputChange}
               required
               disabled={isLoading}
