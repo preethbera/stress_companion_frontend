@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom"; // Import Link for client-side routing
+import { CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,6 +58,11 @@ export function RegisterForm() {
   async function onSubmit(event) {
     event.preventDefault();
     
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match. Please try again.");
       return;
@@ -192,6 +198,16 @@ export function RegisterForm() {
               disabled={isLoading}
               className="rounded-md bg-background border-input"
             />
+            <div className="flex items-center space-x-2 text-sm mt-2">
+              {formData.password.length >= 6 ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              ) : (
+                <XCircle className="w-4 h-4 text-muted-foreground" />
+              )}
+              <span className={formData.password.length >= 6 ? "text-green-500" : "text-muted-foreground"}>
+                Must be at least 6 characters
+              </span>
+            </div>
           </div>
 
           <div className="space-y-2">
