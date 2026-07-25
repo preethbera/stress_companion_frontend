@@ -37,7 +37,10 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error("Axios Response Error intercept:", error);
-    if (error.response && error.response.status === 401) {
+    // Extract token from request config to see if it's the demo token
+    const isDemoToken = error.config?.headers?.Authorization?.includes("demo-token-123");
+
+    if (error.response && error.response.status === 401 && !isDemoToken) {
       localStorage.removeItem("stress_companion_auth");
       if (window.location.pathname !== "/login") {
          window.location.href = "/login";

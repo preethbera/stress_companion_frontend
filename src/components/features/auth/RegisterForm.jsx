@@ -36,7 +36,14 @@ export function RegisterForm() {
   const navigate = useNavigate();
   // Safe destructuring using exact Zustand selectors to prevent React render hanging
   const register = useAuthStore((state) => state.register);
+  const loginAsDemo = useAuthStore((state) => state.loginAsDemo);
   const isLoading = useAuthStore((state) => state.isLoading);
+
+  const handleDemoLogin = () => {
+    loginAsDemo();
+    toast.warning("You are using a demo account. Features requiring the backend will not work properly.");
+    navigate("/dashboard");
+  };
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -221,6 +228,25 @@ export function RegisterForm() {
 
           <Button type="submit" className="w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
             {isLoading ? "Creating account..." : "Create Account"}
+          </Button>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="bg-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or</span>
+            </div>
+          </div>
+          
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="w-full rounded-md border-input" 
+            onClick={handleDemoLogin}
+            disabled={isLoading}
+          >
+            Continue as Demo User
           </Button>
         </form>
       </CardContent>

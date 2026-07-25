@@ -110,6 +110,22 @@ export const useAuthStore = create(
         set({ user: null, token: null, isAuthenticated: false, error: null });
       },
 
+      loginAsDemo: () => {
+        set({
+          user: {
+            person_id: "demo-user-123",
+            name: "Demo User",
+            email: "demo@example.com",
+            age: 25,
+            gender: "non-binary",
+          },
+          token: "demo-token-123",
+          isAuthenticated: true,
+          error: null,
+          isLoading: false
+        });
+      },
+
       clearError: () => {
         set({ error: null });
       },

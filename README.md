@@ -4,7 +4,7 @@
 The **Stress Companion Frontend** is a modern React application intended to provide real-time stress analysis and chat-based therapy or assistance. It integrates advanced visual and voice analysis tools (e.g., MediaPipe for vision, VAD for voice detection), real-time WebSockets for stress inference, and AI-driven conversational elements. The frontend acts as the user-facing portal to interact with backend services via both RESTful APIs and real-time WebSocket connections.
 
 ## 2. Complete Frontend Tech Stack
-The project is built on modern web technologies optimized for performance and real-time interactions:
+The project is built on modern web technologies optimized for performance and real-time interactions: 
 
 *   **Core Framework**: React 19, Vite, React Router DOM v7
 *   **Optimization**: React Compiler (via `babel-plugin-react-compiler`)

@@ -15,7 +15,14 @@ export function LoginForm() {
   const navigate = useNavigate();
   // Using exact selectors ensures React 100% binds exactly to changes in these fields
   const login = useAuthStore((state) => state.login);
+  const loginAsDemo = useAuthStore((state) => state.loginAsDemo);
   const isLoading = useAuthStore((state) => state.isLoading);
+
+  const handleDemoLogin = () => {
+    loginAsDemo();
+    toast.warning("You are using a demo account. Features requiring the backend will not work properly.");
+    navigate("/dashboard");
+  };
 
   async function onSubmit(event) {
     event.preventDefault();
@@ -97,6 +104,25 @@ export function LoginForm() {
 
           <Button type="submit" className="w-full rounded-md bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
             {isLoading ? "Signing in..." : "Sign In"}
+          </Button>
+          
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="bg-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or</span>
+            </div>
+          </div>
+          
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="w-full rounded-md border-input" 
+            onClick={handleDemoLogin}
+            disabled={isLoading}
+          >
+            Continue as Demo User
           </Button>
         </form>
       </CardContent>
