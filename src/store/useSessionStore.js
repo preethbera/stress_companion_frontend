@@ -10,7 +10,7 @@ const initialState = {
 
   modelStatus: 'idle', // 'idle' | 'loading' | 'ready' | 'error'
 
-  selectedModel: 'qwen-local',
+  selectedModel: 'gemini-api',
 
   aiState: 'idle', // 'idle' | 'listening' | 'thinking' | 'speaking'
   isMicOn: false,
