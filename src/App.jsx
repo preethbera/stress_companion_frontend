@@ -7,15 +7,14 @@ import SettingsPage from "./pages/SettingsPage";
 import { ThemeProvider } from "@/components/theme-provider";
 import Dashboard from "./pages/Dashboard";
 import { Layout } from "@/components/layout/Layout";
-import SessionReportPage from "./pages/SessionReportPage";
+import ReportPage from "./pages/ReportPage";
 import StressAnalysisSession from "./pages/StressAnalysisSession";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Toaster } from "@/components/ui/sonner";
 
-const History = () => (
-  <div className="py-8 text-2xl font-bold">Your Activity History</div>
-);
+import HistoryPage from "./pages/HistoryPage";
+import LandingPage from "./pages/LandingPage";
 
 // Helper component for public-only routes (like login/signup)
 const PublicRoute = ({ children }) => {
@@ -76,7 +75,7 @@ export default function App() {
             path="/report"
             element={
               <ProtectedRoute>
-                <SessionReportPage />
+                <ReportPage />
               </ProtectedRoute>
             }
           />
@@ -84,7 +83,15 @@ export default function App() {
             path="/history"
             element={
               <ProtectedRoute>
-                <History />
+                <HistoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/history/:sessionId"
+            element={
+              <ProtectedRoute>
+                <ReportPage />
               </ProtectedRoute>
             }
           />
@@ -110,15 +117,7 @@ export default function App() {
             path="/"
             element={
               <Layout user={user} onLogout={logout}>
-                <div className="py-20 text-center mx-auto px-4 md:px-8 max-w-7xl">
-                  <h1 className="text-4xl font-bold mb-4 tracking-tight md:text-6xl">
-                    Welcome to Stress Companion
-                  </h1>
-                  <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto">
-                    Your personal mental health assistant, designed to help you
-                    find balance and clarity.
-                  </p>
-                </div>
+                <LandingPage />
               </Layout>
             }
           />

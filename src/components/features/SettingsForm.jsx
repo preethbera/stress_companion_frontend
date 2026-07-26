@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Save, Moon, Sun, Monitor } from "lucide-react";
+import { Save, Moon, Sun, Monitor } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 import { settingsSchema } from "@/lib/schemas/settings";
 import { useTheme } from "@/components/theme-provider";
@@ -86,7 +87,7 @@ export function SettingsForm() {
             // UPDATED: rounded-md for consistency with ChatPage
             className="min-w-[120px] rounded-md cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
           >
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            {isSaving ? <Spinner className="mr-2" /> : <Save className="mr-2 h-4 w-4" />}
             Save Changes
           </Button>
         </div>

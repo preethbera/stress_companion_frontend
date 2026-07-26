@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Save } from "lucide-react";
+import { Save } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -70,7 +71,7 @@ export function ProfileForm() {
             disabled={isSaving} 
             className="min-w-[120px] cursor-pointer rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
           >
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            {isSaving ? <Spinner className="mr-2" /> : <Save className="mr-2 h-4 w-4" />}
             Save Changes
           </Button>
         </div>

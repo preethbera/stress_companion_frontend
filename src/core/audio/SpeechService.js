@@ -52,6 +52,12 @@ export class SpeechService {
     this.recognition.onerror = (event) => {
       if (event.error !== 'no-speech') {
         console.error("SpeechService Error:", event.error);
+        
+        // Fatal errors that mean we should stop trying to restart
+        if (event.error === 'network' || event.error === 'not-allowed') {
+          this.isActive = false;
+        }
+        
         if (this.onError) this.onError(event);
       }
     };

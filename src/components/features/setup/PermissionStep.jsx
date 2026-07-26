@@ -1,5 +1,6 @@
 import React from "react";
-import { AlertTriangle, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StepLayout, StepHeader, StepFooter } from "./SharedComponents";
 import { usePermissionCheck } from "@/hooks/setup/usePermissionCheck";
@@ -37,7 +38,7 @@ export function PermissionStep({ onNext }) {
                 )}
               </div>
               {isChecking ? (
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <Spinner className="h-5 w-5 text-muted-foreground" />
               ) : item.granted ? (
                 <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               ) : (

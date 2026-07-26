@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -64,7 +65,7 @@ export function GeneralInfoTab({ form }) {
               </AvatarFallback>
             </Avatar>
             <div className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 shadow-md border-2 border-background">
-              {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+              {isUploading ? <Spinner className="h-3 w-3" /> : <Camera className="h-3 w-3" />}
             </div>
             {/* Hidden Input for handling upload */}
             <input 

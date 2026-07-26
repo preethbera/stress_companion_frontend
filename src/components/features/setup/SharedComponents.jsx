@@ -2,11 +2,11 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   CameraOff,
-  Loader2,
   Camera,
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -140,7 +140,7 @@ export function BaseCameraStep({
       variant: "outline",
       className: "bg-transparent text-muted-foreground border-muted-foreground",
       icon: (
-        <Loader2 className="w-4 h-4 mr-2 animate-spin text-muted-foreground" />
+        <Spinner className="mr-2 text-muted-foreground" />
       ),
     },
     found: {

@@ -3,6 +3,7 @@ import { AudioStreamer } from "@/core/audio/AudioStreamer";
 import { SpeechService } from "@/core/audio/SpeechService";
 import { TTSEngine } from "@/core/audio/TTSEngine";
 import { useSessionStore } from "@/store/useSessionStore";
+import { toast } from "sonner";
 
 export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
   // ==========================================
@@ -52,7 +53,16 @@ export function useVoiceAgent({ deviceId, onResult, onInterrupt }) {
 
     speechRef.current = new SpeechService(
       (text) => setTranscript(text),
-      (err) => console.error("SpeechService encountered an error:", err)
+      (err) => {
+        console.error("SpeechService encountered an error:", err);
+        if (err.error === 'network' || err.message === 'Browser unsupported') {
+          toast.error("Your browser restricts built-in speech recognition. For voice chat, please use Chrome or Edge.", {
+            id: "stt-unsupported",
+            duration: 6000
+          });
+          // Note: SpeechService will automatically stop the restart loop on these fatal errors
+        }
+      }
     );
 
     return () => {

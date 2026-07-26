@@ -1,6 +1,7 @@
 import React from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Server, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
+import { Server, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { useBackendHealth } from "@/hooks/setup/useBackendHealth";
 import { StepLayout, StepHeader, StepFooter } from "./SharedComponents";
 import { useSessionStore } from "../../../store/useSessionStore";
@@ -33,7 +34,7 @@ export function ConnectionStep({ onBack, onComplete }) {
 
           <div className="flex items-center justify-center shrink-0">
             {isConnecting ? (
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <Spinner className="h-5 w-5 text-muted-foreground" />
             ) : !backendError ? (
               <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             ) : (

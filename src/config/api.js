@@ -20,6 +20,8 @@ export const API_ENDPOINTS = {
   SESSION_SUMMARY: (sessionId) => `${API_BASE}/api/v1/sessions/${sessionId}/summary`,
   SESSION_STATS: `${API_BASE}/api/v1/sessions/stats`,
   SESSION_MESSAGES: (sessionId) => `${API_BASE}/api/v1/sessions/${sessionId}/messages`,
+  SESSION_HISTORY: `${API_BASE}/api/v1/sessions/history`,
+  SESSION_DETAILS: (sessionId) => `${API_BASE}/api/v1/sessions/${sessionId}/details`,
 };
 
 export const LLM_MODELS = [

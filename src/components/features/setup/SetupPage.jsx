@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 import { PermissionStep } from "@/components/features/setup/PermissionStep";
 import { MicrophoneStep } from "@/components/features/setup/MicrophoneStep";
@@ -85,7 +85,7 @@ export default function SetupPage() {
         >
           {isSkipping ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Spinner className="mr-2" />
               Auto-Configuring...
             </>
           ) : (

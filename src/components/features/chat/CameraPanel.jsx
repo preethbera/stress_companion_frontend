@@ -1,5 +1,6 @@
 import React from "react";
-import { X, WifiOff, Loader2, Circle } from "lucide-react";
+import { X, WifiOff, Circle } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,7 @@ export function CameraPanel({
     connecting: {
       label: "Connecting...",
       variant: "secondary",
-      icon: <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />,
+      icon: <Spinner className="h-3 w-3 text-muted-foreground" />,
       className: "bg-secondary text-secondary-foreground",
     },
     disconnected: {
