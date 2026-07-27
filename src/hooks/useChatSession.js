@@ -70,11 +70,6 @@ export function useChatSession() {
     const userMsg = { id: Date.now().toString(), role: "user", content: textToSend };
     addChatMessage(userMsg);
     setInput("");
-    
-    // Save User message to backend
-    if (activeSessionId) {
-      sessionService.saveChatMessage(activeSessionId, "user", textToSend).catch(err => console.error("Sync error:", err));
-    }
 
     clearTranscript(); 
     setAiState("thinking");
@@ -84,11 +79,6 @@ export function useChatSession() {
       const aiMsg = { id: (Date.now() + 1).toString(), role: "assistant", content: aiText };
       addChatMessage(aiMsg);
       speak(aiText);
-      
-      // Save AI message to backend
-      if (activeSessionId) {
-        sessionService.saveChatMessage(activeSessionId, "assistant", aiText).catch(err => console.error("Sync error:", err));
-      }
     } catch (error) {
       if (error.name === 'AbortError') {
         // Just aborted, no error display needed

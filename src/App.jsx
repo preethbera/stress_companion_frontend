@@ -15,6 +15,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 import HistoryPage from "./pages/HistoryPage";
 import LandingPage from "./pages/LandingPage";
+import { MobileWarning } from "@/components/layout/MobileWarning";
 
 // Helper component for public-only routes (like login/signup)
 const PublicRoute = ({ children }) => {
@@ -26,10 +27,11 @@ const PublicRoute = ({ children }) => {
 };
 
 export default function App() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, isAuthenticated } = useAuthStore();
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      <MobileWarning />
       <BrowserRouter>
         <Routes>
           {/* PUBLIC ROUTES */}
@@ -116,9 +118,13 @@ export default function App() {
           <Route
             path="/"
             element={
-              <Layout user={user} onLogout={logout}>
-                <LandingPage />
-              </Layout>
+              isAuthenticated ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Layout user={user} onLogout={logout}>
+                  <LandingPage />
+                </Layout>
+              )
             }
           />
         </Routes>
